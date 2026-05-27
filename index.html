@@ -470,6 +470,97 @@
       .kpi-value { font-size: 20px; }
       .config-grid { grid-template-columns: 1fr; }
     }
+
+    /* ── Comparativos ─────────────────────────────────────────────────────────── */
+    .comp-screen { padding: 24px; max-width: 1600px; margin: 0 auto; }
+    .comp-screen h2 { font-size: 18px; font-weight: 700; margin-bottom: 18px; }
+
+    .comp-config { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; margin-bottom: 16px; }
+    .comp-config-top { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 16px; }
+    .comp-config-top .field { display: flex; flex-direction: column; gap: 5px; }
+    .comp-config-top label { font-size: 11px; color: var(--text2); font-weight: 500; }
+    .comp-config-top input, .comp-config-top select {
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+      padding: 9px 11px; color: var(--text); font-size: 13px; outline: none;
+    }
+    .comp-config-top input:focus, .comp-config-top select:focus { border-color: var(--accent); }
+
+    .comp-periods-wrap { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-start; }
+    .comp-period-card {
+      background: var(--surface2); border-radius: 10px; padding: 14px 16px;
+      min-width: 220px; flex: 1; max-width: 280px;
+      border-left: 4px solid var(--accent); position: relative;
+    }
+    .comp-period-card .period-label-input {
+      width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--border);
+      color: var(--text); font-size: 13px; font-weight: 600; padding: 2px 0 4px; margin-bottom: 10px; outline: none;
+    }
+    .comp-period-card .period-label-input:focus { border-bottom-color: var(--accent); }
+    .comp-period-dates { display: flex; gap: 8px; margin-bottom: 8px; }
+    .comp-period-dates input[type=date] {
+      flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+      padding: 6px 8px; color: var(--text); font-size: 12px; outline: none;
+    }
+    .comp-period-dates input[type=date]:focus { border-color: var(--accent); }
+    .comp-period-presets { display: flex; gap: 4px; flex-wrap: wrap; }
+    .comp-preset-btn {
+      padding: 3px 8px; font-size: 10px; border-radius: 4px; border: 1px solid var(--border);
+      background: var(--surface); color: var(--text2); cursor: pointer; transition: all .15s;
+    }
+    .comp-preset-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .comp-period-remove {
+      position: absolute; top: 8px; right: 8px; background: none; border: none;
+      color: var(--text2); cursor: pointer; font-size: 14px; line-height: 1;
+      padding: 2px 5px; border-radius: 4px;
+    }
+    .comp-period-remove:hover { color: var(--danger); background: rgba(255,78,106,0.1); }
+    .comp-add-period {
+      min-width: 120px; max-width: 120px; background: var(--surface2); border: 2px dashed var(--border);
+      border-radius: 10px; padding: 14px; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 6px; cursor: pointer; color: var(--text2); font-size: 12px;
+      transition: all .2s;
+    }
+    .comp-add-period:hover { border-color: var(--accent); color: var(--accent); }
+    .comp-add-period span { font-size: 24px; line-height: 1; }
+
+    .comp-kpis-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 16px; }
+    .comp-kpi-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+      padding: 14px 16px; border-top: 3px solid var(--accent);
+    }
+    .comp-kpi-period { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text2); margin-bottom: 10px; }
+    .comp-kpi-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+    .comp-kpi-label { font-size: 10px; color: var(--text2); }
+    .comp-kpi-val { font-size: 15px; font-weight: 700; }
+    .comp-kpi-delta { font-size: 11px; font-weight: 600; margin-top: 8px; }
+    .delta-up { color: var(--success); }
+    .delta-down { color: var(--danger); }
+    .delta-neu { color: var(--text2); }
+
+    .comp-charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+    .comp-chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
+    .comp-chart-card h3 { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 14px; }
+    .comp-chart-card.full { grid-column: 1 / -1; }
+
+    .comp-insights { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; margin-bottom: 16px; }
+    .comp-insights h3 { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 12px; }
+    .insight-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .insight-item:last-child { border-bottom: none; }
+    .insight-icon { font-size: 16px; flex-shrink: 0; }
+
+    .comp-table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; overflow-x: auto; }
+    .comp-table-wrap h3 { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 14px; }
+    .comp-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .comp-table th { text-align: right; padding: 8px 10px; border-bottom: 2px solid var(--border); font-size: 11px; color: var(--text2); white-space: nowrap; }
+    .comp-table th:first-child, .comp-table th:nth-child(2) { text-align: left; }
+    .comp-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: right; }
+    .comp-table td:first-child { text-align: left; font-weight: 600; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .comp-table td:nth-child(2) { text-align: left; }
+    .comp-table tr:hover td { background: var(--surface2); }
+    .comp-table .td-delta-up { color: var(--success); font-weight: 600; }
+    .comp-table .td-delta-down { color: var(--danger); font-weight: 600; }
+    .comp-progress { background: var(--surface2); border-radius: 4px; height: 4px; margin-top: 8px; overflow: hidden; display: none; }
+    .comp-progress-bar { height: 100%; background: var(--accent); border-radius: 4px; transition: width .3s; width: 0%; }
   </style>
 </head>
 <body>
@@ -508,6 +599,7 @@
   <button class="tab-btn active" onclick="switchTab('chopes')">🍺 Chopes</button>
   <button class="tab-btn" onclick="switchTab('dashboard')">📊 Dashboard</button>
   <button class="tab-btn" onclick="switchTab('busca')">🔍 Busca de Produtos</button>
+  <button class="tab-btn" onclick="switchTab('comp')">📈 Comparativos</button>
 </div>
 
 <!-- ═══ TELA 1: DASHBOARD ═══ -->
@@ -518,10 +610,7 @@
   <div class="config-panel">
     <h2>Configuração</h2>
     <div class="config-grid">
-      <div class="field">
-        <label>Token</label>
-        <input type="text" id="inputToken" value="8c7c0109711eeef6c9944a829a3c2fd6a440347b13172b410f02f1f3bf239d9d">
-      </div>
+      <input type="hidden" id="inputToken" value="">
       <div class="field">
         <label>Lojas</label>
         <div class="store-picker" id="storePicker">
@@ -926,6 +1015,114 @@
 </div>
 </div><!-- /screen-busca -->
 
+<!-- ═══ TELA 4: COMPARATIVOS ═══ -->
+<div class="tab-screen" id="screen-comp">
+<div class="comp-screen">
+  <h2>📈 Comparativos de Vendas</h2>
+
+  <!-- Config top: lojas + categoria + produto -->
+  <div class="comp-config">
+    <div class="comp-config-top">
+      <div class="field">
+        <label>Lojas</label>
+        <div class="store-picker" id="compStorePicker">
+          <div class="store-trigger" id="compStoreTrigger" onclick="toggleCompStorePicker()">
+            <span id="compStoreSummary">Todas (9)</span>
+            <span class="store-trigger-arrow">▾</span>
+          </div>
+          <div class="store-dropdown" id="compStoreDropdown">
+            <div class="store-option all-option">
+              <input type="checkbox" id="compCheckAll" onchange="toggleCompAll(this.checked)">
+              <label for="compCheckAll" style="cursor:pointer;font-weight:600">Todas</label>
+            </div>
+            <div class="store-option-divider"></div>
+            <div id="compStoreCheckboxes"></div>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Categoria</label>
+        <select id="compCategoria" style="min-width:140px">
+          <option value="">Todas</option>
+          <option value="CHOPE">CHOPE</option>
+          <option value="CERVEJA">CERVEJA</option>
+          <option value="COMIDA">COMIDA</option>
+          <option value="DRINQUE">DRINQUE</option>
+          <option value="PIZZA">PIZZA</option>
+          <option value="SOFT">SOFT</option>
+          <option value="VINHO">VINHO</option>
+          <option value="LOJINHA">LOJINHA</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Produto (opcional)</label>
+        <input type="text" id="compProduto" placeholder="Ex: Pilsenzinha, Batata..." style="min-width:220px">
+      </div>
+      <button class="btn btn-primary" onclick="buscarComparativo()" style="align-self:flex-end">Analisar</button>
+    </div>
+    <!-- Barra de progresso -->
+    <div class="comp-progress" id="compProgress">
+      <div class="comp-progress-bar" id="compProgressBar"></div>
+    </div>
+    <div style="font-size:12px;color:var(--text2);margin-top:6px" id="compStatus">Configure os períodos abaixo e clique em Analisar.</div>
+
+    <!-- Períodos -->
+    <div style="margin-top:16px">
+      <div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Períodos para comparar</div>
+      <div class="comp-periods-wrap" id="compPeriodsWrap">
+        <!-- gerado por JS -->
+        <div class="comp-add-period" onclick="addCompPeriod()" id="compAddBtn">
+          <span>＋</span>
+          <div>Adicionar período</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPIs por período -->
+  <div class="comp-kpis-grid" id="compKpis" style="display:none"></div>
+
+  <!-- Insights automáticos -->
+  <div class="comp-insights" id="compInsights" style="display:none">
+    <h3>💡 Insights</h3>
+    <div id="compInsightsList"></div>
+  </div>
+
+  <!-- Gráficos -->
+  <div class="comp-charts-grid" id="compCharts" style="display:none">
+    <div class="comp-chart-card">
+      <h3>💰 Faturamento por Período</h3>
+      <div style="height:260px"><canvas id="compChartFat"></canvas></div>
+    </div>
+    <div class="comp-chart-card">
+      <h3>📦 Unidades Vendidas por Período</h3>
+      <div style="height:260px"><canvas id="compChartQtd"></canvas></div>
+    </div>
+    <div class="comp-chart-card full">
+      <h3>📊 Mix por Categoria — por Período</h3>
+      <div style="height:280px"><canvas id="compChartMix"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Tabela -->
+  <div class="comp-table-wrap" id="compTableWrap" style="display:none">
+    <h3>Produtos — detalhamento por período</h3>
+    <div style="margin-bottom:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <input type="text" id="compTableSearch" placeholder="Filtrar produto..." oninput="renderCompTable()"
+        style="padding:7px 11px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;outline:none;min-width:200px">
+      <button class="btn btn-secondary" onclick="exportCompCSV()" style="font-size:12px;padding:7px 14px">↓ CSV</button>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="comp-table" id="compTable">
+        <thead><tr><th>Produto</th><th>Cat.</th><th>—</th></tr></thead>
+        <tbody id="compTbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+</div><!-- /screen-comp -->
+
 <script>
   // ── Config ──────────────────────────────────────────────────────────────────
   const BASE = 'https://api.zigcore.com.br/integration';
@@ -989,7 +1186,7 @@
 
   // ── API ──────────────────────────────────────────────────────────────────────
   async function apiFetch(path) {
-    const token = document.getElementById('inputToken').value.trim();
+    const token = sessionStorage.getItem('oc_token') || '';
     const res = await fetch(`${BASE}${path}`, { headers: { Authorization: token } });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
@@ -2338,6 +2535,344 @@
     el.style.color = state === 'error' ? 'var(--danger)' : state === 'loading' ? 'var(--warning)' : 'var(--text2)';
   }
 
+  // ── Comparativos ─────────────────────────────────────────────────────────────
+  const COMP_COLORS = [
+    { bg:'#7c6aff', alpha:'rgba(124,106,255,0.85)' },
+    { bg:'#00d4aa', alpha:'rgba(0,212,170,0.85)'   },
+    { bg:'#ffb547', alpha:'rgba(255,181,71,0.85)'  },
+    { bg:'#ff4e6a', alpha:'rgba(255,78,106,0.85)'  },
+    { bg:'#4ecbff', alpha:'rgba(78,203,255,0.85)'  },
+  ];
+  let compPeriods = [];   // [{id, label, dtinicio, dtfim, data:[]}]
+  let compPeriodId = 0;
+  let compChartFat = null, compChartQtd = null, compChartMix = null;
+
+  // ── Store Picker Comparativos ────────────────────────────────────────────────
+  function initCompPicker() {
+    const c = document.getElementById('compStoreCheckboxes');
+    c.innerHTML = lojas.map(l => `
+      <div class="store-option">
+        <input type="checkbox" id="compL_${l.id}" value="${l.id}" checked onchange="updateCompStoreSummary()">
+        <label for="compL_${l.id}" style="cursor:pointer">${l.name}</label>
+      </div>`).join('');
+    document.getElementById('compCheckAll').checked = true;
+    updateCompStoreSummary();
+  }
+  function toggleCompStorePicker() {
+    document.getElementById('compStoreTrigger').classList.toggle('open');
+    document.getElementById('compStoreDropdown').classList.toggle('open');
+  }
+  function toggleCompAll(checked) {
+    lojas.forEach(l => { document.getElementById('compL_' + l.id).checked = checked; });
+    updateCompStoreSummary();
+  }
+  function updateCompStoreSummary() {
+    const checked = getCompCheckedLojas();
+    const all = checked.length === lojas.length;
+    document.getElementById('compCheckAll').checked = all;
+    document.getElementById('compStoreSummary').textContent =
+      all ? `Todas (${lojas.length})` :
+      checked.length === 0 ? 'Nenhuma' :
+      checked.length === 1 ? lojas.find(l => l.id === checked[0])?.name :
+      `${checked.length} lojas`;
+  }
+  function getCompCheckedLojas() {
+    return lojas.filter(l => document.getElementById('compL_' + l.id)?.checked).map(l => l.id);
+  }
+  document.addEventListener('click', e => {
+    const p = document.getElementById('compStorePicker');
+    if (p && !p.contains(e.target)) {
+      document.getElementById('compStoreTrigger')?.classList.remove('open');
+      document.getElementById('compStoreDropdown')?.classList.remove('open');
+    }
+  });
+
+  // ── Períodos ─────────────────────────────────────────────────────────────────
+  function addCompPeriod() {
+    if (compPeriods.length >= 5) return;
+    const id = ++compPeriodId;
+    const idx = compPeriods.length;
+    const d = getDefaultDates();
+    // desloca cada período novo 1 mês antes
+    const shift = idx;
+    const start = new Date(d.start + 'T00:00:00');
+    const end   = new Date(d.end   + 'T00:00:00');
+    start.setMonth(start.getMonth() - shift);
+    end.setMonth(end.getMonth() - shift);
+    const fmt = d => d.toISOString().split('T')[0];
+    const label = `Período ${idx + 1}`;
+    compPeriods.push({ id, label, dtinicio: fmt(start), dtfim: fmt(end), data: [] });
+    renderCompPeriods();
+  }
+  function removeCompPeriod(id) {
+    compPeriods = compPeriods.filter(p => p.id !== id);
+    renderCompPeriods();
+  }
+  function renderCompPeriods() {
+    const wrap = document.getElementById('compPeriodsWrap');
+    const addBtn = `<div class="comp-add-period" onclick="addCompPeriod()" id="compAddBtn" ${compPeriods.length >= 5 ? 'style="display:none"' : ''}><span>＋</span><div>Adicionar período</div></div>`;
+    wrap.innerHTML = compPeriods.map((p, i) => {
+      const c = COMP_COLORS[i % COMP_COLORS.length];
+      return `<div class="comp-period-card" id="pcard_${p.id}" style="border-left-color:${c.bg}">
+        ${compPeriods.length > 1 ? `<button class="comp-period-remove" onclick="removeCompPeriod(${p.id})">✕</button>` : ''}
+        <input class="period-label-input" value="${p.label}" oninput="compPeriods[${i}].label=this.value" placeholder="Nome do período">
+        <div class="comp-period-dates">
+          <input type="date" value="${p.dtinicio}" oninput="compPeriods[${i}].dtinicio=this.value">
+          <input type="date" value="${p.dtfim}"    oninput="compPeriods[${i}].dtfim=this.value">
+        </div>
+        <div class="comp-period-presets">
+          <button class="comp-preset-btn" onclick="setCompPreset(${i},'thismonth')">Este mês</button>
+          <button class="comp-preset-btn" onclick="setCompPreset(${i},'lastmonth')">Mês ant.</button>
+          <button class="comp-preset-btn" onclick="setCompPreset(${i},'last30')">30 dias</button>
+          <button class="comp-preset-btn" onclick="setCompPreset(${i},'last90')">90 dias</button>
+          <button class="comp-preset-btn" onclick="setCompPreset(${i},'last12m')">12 meses</button>
+        </div>
+      </div>`;
+    }).join('') + addBtn;
+  }
+  function setCompPreset(idx, preset) {
+    const now = new Date();
+    let s, e;
+    const fmt = d => d.toISOString().split('T')[0];
+    if (preset === 'thismonth') {
+      s = new Date(now.getFullYear(), now.getMonth(), 1);
+      e = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    } else if (preset === 'lastmonth') {
+      s = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      e = new Date(now.getFullYear(), now.getMonth(), 0);
+    } else if (preset === 'last30') {
+      e = new Date(now); s = new Date(now); s.setDate(s.getDate() - 29);
+    } else if (preset === 'last90') {
+      e = new Date(now); s = new Date(now); s.setDate(s.getDate() - 89);
+    } else if (preset === 'last12m') {
+      e = new Date(now); s = new Date(now); s.setFullYear(s.getFullYear() - 1);
+    }
+    compPeriods[idx].dtinicio = fmt(s);
+    compPeriods[idx].dtfim   = fmt(e);
+    renderCompPeriods();
+  }
+
+  // ── Fetch e build ─────────────────────────────────────────────────────────────
+  async function buscarComparativo() {
+    const checkedIds = getCompCheckedLojas();
+    if (!checkedIds.length) { alert('Selecione ao menos uma loja.'); return; }
+    if (!compPeriods.length) { alert('Adicione ao menos um período.'); return; }
+    for (const p of compPeriods) {
+      if (!p.dtinicio || !p.dtfim) { alert(`Preencha as datas do período "${p.label}".`); return; }
+    }
+    const totalCalls = compPeriods.reduce((s, p) => s + splitDates(p.dtinicio, p.dtfim, 5).length * checkedIds.length, 0);
+    let done = 0;
+    const prog = document.getElementById('compProgress');
+    const bar  = document.getElementById('compProgressBar');
+    prog.style.display = 'block'; bar.style.width = '0%';
+    document.getElementById('compStatus').textContent = 'Buscando dados...';
+
+    try {
+      for (const p of compPeriods) {
+        const results = await Promise.all(
+          checkedIds.map(lid =>
+            fetchSaida(lid, p.dtinicio, p.dtfim).then(r => { done += splitDates(p.dtinicio, p.dtfim, 5).length; bar.style.width = Math.round(done/totalCalls*100)+'%'; return r; }).catch(() => [])
+          )
+        );
+        p.data = results.flat().filter(Boolean).filter(d => !d.isRefunded);
+      }
+      prog.style.display = 'none';
+      renderComparativo();
+    } catch(e) {
+      document.getElementById('compStatus').textContent = 'Erro: ' + e.message;
+      prog.style.display = 'none';
+    }
+  }
+
+  function filtrarCompData(data) {
+    const cat  = document.getElementById('compCategoria').value.trim().toUpperCase();
+    const prod = sem(document.getElementById('compProduto').value.trim());
+    return data.filter(d => {
+      if (cat  && (d.productCategory || '').toUpperCase() !== cat) return false;
+      if (prod && !sem(d.productName || '').includes(prod)) return false;
+      return true;
+    });
+  }
+
+  function renderComparativo() {
+    const periodos = compPeriods.map((p, i) => ({
+      ...p,
+      filtered: filtrarCompData(p.data),
+      color: COMP_COLORS[i % COMP_COLORS.length]
+    }));
+    const total = periodos.reduce((s, p) => s + p.filtered.length, 0);
+    document.getElementById('compStatus').textContent =
+      `${total} registros | ${periodos.length} períodos | ${periodos.map(p=>p.filtered.length+' em '+p.label).join(' · ')}`;
+
+    renderCompKpis(periodos);
+    renderCompCharts(periodos);
+    renderCompInsights(periodos);
+    renderCompTable();
+    document.getElementById('compKpis').style.display    = 'grid';
+    document.getElementById('compInsights').style.display = 'block';
+    document.getElementById('compCharts').style.display  = 'grid';
+    document.getElementById('compTableWrap').style.display = 'block';
+  }
+
+  function calcMetrics(data) {
+    const fat  = data.reduce((s, d) => s + d.unitValue * d.count - (d.discountValue || 0), 0);
+    const qty  = data.reduce((s, d) => s + d.count, 0);
+    const ticket = qty ? fat / qty : 0;
+    const litros = data.filter(d => d.fractionUnit === 'L' && d.fractionalAmount)
+                       .reduce((s, d) => s + (d.fractionalAmount || 0), 0);
+    return { fat, qty, ticket, litros };
+  }
+
+  function renderCompKpis(periodos) {
+    const grid = document.getElementById('compKpis');
+    grid.style.gridTemplateColumns = `repeat(${periodos.length}, 1fr)`;
+    grid.innerHTML = periodos.map((p, i) => {
+      const m  = calcMetrics(p.filtered);
+      const mp = i > 0 ? calcMetrics(periodos[i-1].filtered) : null;
+      const delta = mp && mp.fat ? ((m.fat - mp.fat) / mp.fat * 100) : null;
+      const dClass = delta === null ? '' : delta >= 0 ? 'delta-up' : 'delta-down';
+      const dTxt   = delta === null ? '' : (delta >= 0 ? '▲' : '▼') + Math.abs(delta).toFixed(1) + '% vs anterior';
+      return `<div class="comp-kpi-card" style="border-top-color:${p.color.bg}">
+        <div class="comp-kpi-period" style="color:${p.color.bg}">${p.label}</div>
+        <div class="comp-kpi-row"><span class="comp-kpi-label">Faturamento</span><span class="comp-kpi-val">${fmt(m.fat)}</span></div>
+        <div class="comp-kpi-row"><span class="comp-kpi-label">Unidades</span><span class="comp-kpi-val">${fmtNum(m.qty)}</span></div>
+        <div class="comp-kpi-row"><span class="comp-kpi-label">Ticket médio</span><span class="comp-kpi-val">${fmt(m.ticket)}</span></div>
+        ${m.litros > 0 ? `<div class="comp-kpi-row"><span class="comp-kpi-label">Litros</span><span class="comp-kpi-val">${fmtL(m.litros)}</span></div>` : ''}
+        ${dTxt ? `<div class="comp-kpi-delta ${dClass}">${dTxt}</div>` : ''}
+      </div>`;
+    }).join('');
+  }
+
+  function renderCompCharts(periodos) {
+    const labels = periodos.map(p => p.label);
+    const fatData = periodos.map(p => calcMetrics(p.filtered).fat / 100);
+    const qtdData = periodos.map(p => calcMetrics(p.filtered).qty);
+    const colors  = periodos.map(p => p.color.alpha);
+    const borders = periodos.map(p => p.color.bg);
+    const chartOpts = (yFmt) => ({
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' ' + yFmt(ctx.raw) } } },
+      scales: {
+        x: { grid: { color: '#2e3144' }, ticks: { color: '#9aa0b8' } },
+        y: { grid: { color: '#2e3144' }, ticks: { color: '#9aa0b8', callback: v => yFmt(v) } }
+      }
+    });
+    if (compChartFat) compChartFat.destroy();
+    if (compChartQtd) compChartQtd.destroy();
+    if (compChartMix) compChartMix.destroy();
+
+    compChartFat = new Chart(document.getElementById('compChartFat'), {
+      type: 'bar',
+      data: { labels, datasets: [{ data: periodos.map(p => calcMetrics(p.filtered).fat / 100), backgroundColor: colors, borderColor: borders, borderWidth: 2, borderRadius: 6 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' R$' + Number(ctx.raw).toLocaleString('pt-BR',{minimumFractionDigits:2}) } } }, scales: { x: { grid:{color:'#2e3144'}, ticks:{color:'#9aa0b8'} }, y: { grid:{color:'#2e3144'}, ticks:{color:'#9aa0b8', callback: v => 'R$'+(v/100).toLocaleString('pt-BR',{maximumFractionDigits:0})} } } }
+    });
+    compChartQtd = new Chart(document.getElementById('compChartQtd'), {
+      type: 'bar',
+      data: { labels, datasets: [{ data: qtdData, backgroundColor: colors, borderColor: borders, borderWidth: 2, borderRadius: 6 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid:{color:'#2e3144'}, ticks:{color:'#9aa0b8'} }, y: { grid:{color:'#2e3144'}, ticks:{color:'#9aa0b8'} } } }
+    });
+
+    // Mix por categoria (stacked bar)
+    const allCats = [...new Set(periodos.flatMap(p => p.filtered.map(d => d.productCategory || 'Outro')))].filter(Boolean).sort();
+    const catColors = ['#7c6aff','#00d4aa','#ffb547','#ff4e6a','#4ecbff','#a78bfa','#34d399','#f97316','#60a5fa','#e879f9'];
+    const mixDatasets = allCats.map((cat, ci) => ({
+      label: cat,
+      data: periodos.map(p => p.filtered.filter(d => (d.productCategory||'Outro') === cat).reduce((s,d)=>s+d.unitValue*d.count-(d.discountValue||0),0)/100),
+      backgroundColor: catColors[ci % catColors.length] + 'cc',
+      borderColor: catColors[ci % catColors.length],
+      borderWidth: 1, borderRadius: 3
+    }));
+    compChartMix = new Chart(document.getElementById('compChartMix'), {
+      type: 'bar',
+      data: { labels, datasets: mixDatasets },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#9aa0b8', font: { size: 11 } } } }, scales: { x: { stacked: true, grid:{color:'#2e3144'}, ticks:{color:'#9aa0b8'} }, y: { stacked: true, grid:{color:'#2e3144'}, ticks:{color:'#9aa0b8', callback: v => 'R$'+(v/100).toLocaleString('pt-BR',{maximumFractionDigits:0})} } } }
+    });
+  }
+
+  function renderCompInsights(periodos) {
+    const list = document.getElementById('compInsightsList');
+    const insights = [];
+    if (periodos.length >= 2) {
+      const m0 = calcMetrics(periodos[0].filtered);
+      const mL = calcMetrics(periodos[periodos.length-1].filtered);
+      const delta = m0.fat ? (mL.fat - m0.fat) / m0.fat * 100 : 0;
+      if (delta > 5)  insights.push({ icon:'📈', txt:`Crescimento de <b>${delta.toFixed(1)}%</b> no faturamento de "${periodos[0].label}" para "${periodos[periodos.length-1].label}"` });
+      if (delta < -5) insights.push({ icon:'📉', txt:`Queda de <b>${Math.abs(delta).toFixed(1)}%</b> no faturamento de "${periodos[0].label}" para "${periodos[periodos.length-1].label}"` });
+      // Melhor período
+      const best = periodos.reduce((a, b) => calcMetrics(a.filtered).fat > calcMetrics(b.filtered).fat ? a : b);
+      insights.push({ icon:'🏆', txt:`Melhor período: <b>${best.label}</b> com faturamento de <b>${fmt(calcMetrics(best.filtered).fat)}</b>` });
+      // Variação de unidades
+      const dQty = m0.qty ? (mL.qty - m0.qty) / m0.qty * 100 : 0;
+      if (Math.abs(dQty) > 5) insights.push({ icon: dQty > 0 ? '⬆️' : '⬇️', txt:`Unidades vendidas ${dQty > 0 ? 'cresceram' : 'caíram'} <b>${Math.abs(dQty).toFixed(1)}%</b>` });
+    }
+    if (!insights.length) insights.push({ icon:'ℹ️', txt:'Adicione mais períodos para ver comparações automáticas.' });
+    list.innerHTML = insights.map(i => `<div class="insight-item"><span class="insight-icon">${i.icon}</span><span>${i.txt}</span></div>`).join('');
+  }
+
+  let compTableData = [];
+  function renderCompTable() {
+    const search = sem(document.getElementById('compTableSearch')?.value || '');
+    const periodos = compPeriods.map((p, i) => ({ ...p, filtered: filtrarCompData(p.data), color: COMP_COLORS[i % COMP_COLORS.length] }));
+
+    // Agrupa por produto
+    const map = {};
+    periodos.forEach((p, pi) => {
+      p.filtered.forEach(d => {
+        const key = d.productName;
+        if (!map[key]) map[key] = { name: key, cat: d.productCategory || '', periods: periodos.map(() => ({ fat: 0, qty: 0 })) };
+        map[key].periods[pi].fat += d.unitValue * d.count - (d.discountValue || 0);
+        map[key].periods[pi].qty += d.count;
+      });
+    });
+    compTableData = Object.values(map).sort((a, b) => {
+      const fa = a.periods.reduce((s,p)=>s+p.fat,0);
+      const fb = b.periods.reduce((s,p)=>s+p.fat,0);
+      return fb - fa;
+    });
+
+    const filtered = search ? compTableData.filter(r => sem(r.name).includes(search)) : compTableData;
+
+    // Cabeçalho dinâmico
+    const thead = document.querySelector('#compTable thead');
+    thead.innerHTML = `<tr>
+      <th>Produto</th><th>Cat.</th>
+      ${periodos.map(p => `<th style="color:${p.color.bg}" colspan="2">${p.label}</th>`).join('')}
+      ${periodos.length >= 2 ? '<th>Δ% Fat.</th>' : ''}
+    </tr><tr>
+      <th></th><th></th>
+      ${periodos.map(() => '<th style="font-size:10px;color:var(--text2)">R$</th><th style="font-size:10px;color:var(--text2)">Qtd</th>').join('')}
+      ${periodos.length >= 2 ? '<th></th>' : ''}
+    </tr>`;
+
+    const tbody = document.getElementById('compTbody');
+    tbody.innerHTML = filtered.slice(0, 100).map(r => {
+      const delta = periodos.length >= 2 && r.periods[0].fat
+        ? (r.periods[periodos.length-1].fat - r.periods[0].fat) / r.periods[0].fat * 100
+        : null;
+      const dClass = delta === null ? '' : delta >= 0 ? 'td-delta-up' : 'td-delta-down';
+      const dTxt   = delta === null ? '—' : (delta >= 0 ? '+' : '') + delta.toFixed(1) + '%';
+      return `<tr>
+        <td title="${r.name}">${r.name}</td>
+        <td style="color:var(--text2);font-size:11px">${r.cat}</td>
+        ${r.periods.map(p=>`<td>${fmt(p.fat)}</td><td>${fmtNum(p.qty)}</td>`).join('')}
+        ${periodos.length >= 2 ? `<td class="${dClass}">${dTxt}</td>` : ''}
+      </tr>`;
+    }).join('') || '<tr><td colspan="20" style="text-align:center;color:var(--text2);padding:24px">Nenhum produto encontrado</td></tr>';
+  }
+
+  function exportCompCSV() {
+    const periodos = compPeriods.map(p => ({ ...p, filtered: filtrarCompData(p.data) }));
+    const header = ['Produto','Categoria', ...periodos.flatMap(p => [p.label+' Fat.', p.label+' Qtd'])].join(';');
+    const rows = compTableData.map(r =>
+      [r.name, r.cat, ...r.periods.flatMap(p => [(p.fat/100).toFixed(2).replace('.',','), p.qty])].join(';')
+    );
+    const csv = [header, ...rows].join('\n');
+    const a = document.createElement('a');
+    a.href = 'data:text/csv;charset=utf-8,﻿' + encodeURIComponent(csv);
+    a.download = 'comparativos.csv';
+    a.click();
+  }
+
   // ── Start ────────────────────────────────────────────────────────────────────
   const defaults = getDefaultDates();
   document.getElementById('dtinicio').value    = defaults.start;
@@ -2358,10 +2893,14 @@
   init();            // define lojas = LOJAS_FIXAS primeiro
   initChopePicker(); // popula checkboxes do tab Chopes
   initProdPicker();  // popula checkboxes do tab Busca de Produtos
+  initCompPicker();  // popula checkboxes do tab Comparativos
+  addCompPeriod();   // adiciona 2 períodos padrão
+  addCompPeriod();
 
   // ── Login / Senha ────────────────────────────────────────────────────────────
   // Senha armazenada como SHA-256 (não fica visível no código)
-  const SENHA_HASH = 'e05c2b48e4092813d3748f241e1ca27999316b25414640da9986d928b40b3a91';
+  const SENHA_HASH = 'b4d0745846a51179c314e26a499b328e5da121218811facd44aae91df1976277';
+  const _tk = atob('OGM3YzAxMDk3MTFlZWVmNmM5OTQ0YTgyOWEzYzJmZDZhNDQwMzQ3YjEzMTcyYjQxMGYwMmYxZjNiZjIzOWQ5ZA==');
 
   async function sha256(text) {
     const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
@@ -2369,10 +2908,10 @@
   }
 
   async function doLogin() {
-    const input = document.getElementById('loginInput').value;
-    const hash  = await sha256(input);
+    const hash = await sha256(document.getElementById('loginInput').value);
     if (hash === SENHA_HASH) {
-      sessionStorage.setItem('oc_auth', '1');
+      sessionStorage.setItem('oc_auth',  '1');
+      sessionStorage.setItem('oc_token', _tk);
       document.getElementById('loginScreen').style.display = 'none';
     } else {
       const err = document.getElementById('loginError');
@@ -2384,9 +2923,11 @@
   }
 
   // Se já autenticado nessa sessão, pula a tela de login
-  if (sessionStorage.getItem('oc_auth') === '1') {
+  if (sessionStorage.getItem('oc_auth') === '1' && sessionStorage.getItem('oc_token')) {
     document.getElementById('loginScreen').style.display = 'none';
   } else {
+    sessionStorage.removeItem('oc_auth');
+    sessionStorage.removeItem('oc_token');
     setTimeout(() => document.getElementById('loginInput').focus(), 100);
   }
 </script>
