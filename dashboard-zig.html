@@ -1,0 +1,3227 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Onze Copos — Zig</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <style>
+    /* ── Login Screen ───────────────────────────────────────────────────────── */
+    #loginScreen {
+      position: fixed; inset: 0; z-index: 9999;
+      background: #0f1117;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .login-box {
+      background: #1a1d27;
+      border: 1px solid #2e3144;
+      border-radius: 16px;
+      padding: 48px 40px;
+      width: 100%; max-width: 380px;
+      text-align: center;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+    }
+    .login-logo {
+      font-size: 40px; margin-bottom: 8px;
+    }
+    .login-title {
+      font-size: 20px; font-weight: 700; color: #e8eaf0; margin-bottom: 4px;
+    }
+    .login-sub {
+      font-size: 13px; color: #9aa0b8; margin-bottom: 32px;
+    }
+    .login-input {
+      width: 100%; padding: 12px 16px;
+      background: #252836; border: 1px solid #2e3144; border-radius: 8px;
+      color: #e8eaf0; font-size: 15px; outline: none;
+      transition: border-color .2s;
+      margin-bottom: 16px;
+    }
+    .login-input:focus { border-color: #7c6aff; }
+    .login-btn {
+      width: 100%; padding: 12px;
+      background: #7c6aff; border: none; border-radius: 8px;
+      color: #fff; font-size: 15px; font-weight: 600; cursor: pointer;
+      transition: background .2s;
+    }
+    .login-btn:hover { background: #6a58e8; }
+    .login-error {
+      color: #ff4e6a; font-size: 13px; margin-top: 12px; min-height: 18px;
+    }
+
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #252836;
+      --border: #2e3144;
+      --accent: #7c6aff;
+      --accent2: #00d4aa;
+      --text: #e8eaf0;
+      --text2: #9aa0b8;
+      --danger: #ff4e6a;
+      --warning: #ffb547;
+      --success: #00d4aa;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .header-logo {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent), #a78bfa);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 16px; color: white;
+      flex-shrink: 0;
+    }
+    .header-title h1 { font-size: 17px; font-weight: 700; }
+    .header-title p  { font-size: 12px; color: var(--text2); }
+
+    /* Main */
+    .main { padding: 24px; max-width: 1600px; margin: 0 auto; }
+
+    /* Config panel */
+    .config-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 20px;
+      margin-bottom: 16px;
+    }
+    .config-panel h2 {
+      font-size: 11px; font-weight: 600; color: var(--text2);
+      text-transform: uppercase; letter-spacing: .06em; margin-bottom: 14px;
+    }
+    .config-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr auto auto;
+      gap: 10px;
+      align-items: end;
+    }
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field label { font-size: 11px; color: var(--text2); font-weight: 500; }
+    .field input, .field select {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 9px 11px; color: var(--text);
+      font-size: 13px; outline: none; transition: border-color .2s;
+    }
+    .field input:focus, .field select:focus { border-color: var(--accent); }
+
+    .btn {
+      padding: 9px 18px; border-radius: 8px; border: none;
+      cursor: pointer; font-size: 13px; font-weight: 600;
+      transition: opacity .15s, transform .1s; white-space: nowrap;
+    }
+    .btn:hover { opacity: .85; }
+    .btn:active { transform: scale(.97); }
+    .btn-primary  { background: var(--accent); color: white; }
+    .btn-secondary {
+      background: var(--surface2); color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    /* Status + Filters bar */
+    .toolbar {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 20px; flex-wrap: wrap;
+    }
+    .status-bar {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 12px; color: var(--text2);
+    }
+    .status-dot {
+      width: 7px; height: 7px; border-radius: 50%; background: var(--text2);
+      flex-shrink: 0;
+    }
+    .status-dot.ok      { background: var(--success); }
+    .status-dot.error   { background: var(--danger); }
+    .status-dot.loading { background: var(--warning); animation: pulse 1s infinite; }
+
+    .filter-chip {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 7px 12px;
+    }
+    .filter-chip label { font-size: 11px; color: var(--text2); white-space: nowrap; font-weight: 500; }
+    .filter-chip select {
+      background: transparent; border: none; color: var(--text);
+      font-size: 13px; outline: none; cursor: pointer;
+    }
+    .toggle-wrap {
+      display: flex; align-items: center; gap: 7px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 7px 12px; cursor: pointer;
+      margin-left: auto;
+    }
+    .toggle-wrap input[type="checkbox"] {
+      width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer;
+    }
+    .toggle-wrap label { font-size: 12px; color: var(--text2); cursor: pointer; }
+
+    /* KPIs */
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px; margin-bottom: 20px;
+    }
+    .kpi-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 18px 20px;
+      position: relative; overflow: hidden;
+    }
+    .kpi-card::before {
+      content: ''; position: absolute;
+      top: 0; left: 0; right: 0; height: 3px;
+    }
+    .kpi-card:nth-child(1)::before { background: var(--accent); }
+    .kpi-card:nth-child(2)::before { background: var(--accent2); }
+    .kpi-card:nth-child(3)::before { background: var(--warning); }
+    .kpi-card:nth-child(4)::before { background: var(--danger); }
+
+    .kpi-label {
+      font-size: 11px; color: var(--text2); font-weight: 600;
+      text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px;
+    }
+    .kpi-value  { font-size: 26px; font-weight: 800; margin-bottom: 2px; }
+    .kpi-delta  { font-size: 11px; font-weight: 600; margin-top: 4px; min-height: 16px; }
+    .kpi-delta.up   { color: var(--success); }
+    .kpi-delta.down { color: var(--danger); }
+
+    /* Charts grid */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px; margin-bottom: 20px;
+    }
+    .chart-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 18px 20px;
+    }
+    .chart-card.full-width { grid-column: 1 / -1; }
+    .chart-card h3 {
+      font-size: 12px; font-weight: 600; color: var(--text2);
+      text-transform: uppercase; letter-spacing: .05em; margin-bottom: 14px;
+    }
+    .chart-wrap { position: relative; height: 270px; }
+    .chart-wrap.tall { height: 320px; }
+
+    /* Comparativo */
+    .comparativo-section {
+      display: none;
+      background: var(--surface); border: 1px solid var(--accent);
+      border-radius: 12px; padding: 18px 20px; margin-bottom: 20px;
+    }
+    .comp-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .comp-header h2 { font-size: 12px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .05em; }
+    .comp-periods { font-size: 11px; color: var(--text2); }
+    .comp-periods span { color: var(--text); font-weight: 600; }
+
+    .comp-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .comp-item {
+      background: var(--surface2); border-radius: 10px; padding: 14px;
+    }
+    .comp-item-label { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 10px; }
+    .comp-values { display: flex; gap: 12px; }
+    .comp-val { flex: 1; }
+    .comp-val-tag { font-size: 10px; color: var(--text2); margin-bottom: 3px; }
+    .comp-val-num { font-size: 16px; font-weight: 700; }
+    .comp-val-num.atual    { color: var(--accent); }
+    .comp-val-num.anterior { color: var(--text2); }
+    .comp-delta { margin-top: 8px; font-size: 12px; font-weight: 700; }
+    .comp-delta.up   { color: var(--success); }
+    .comp-delta.down { color: var(--danger); }
+
+    /* Table */
+    .table-section {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 18px 20px;
+    }
+    .table-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px; flex-wrap: wrap; gap: 10px;
+    }
+    .table-header-left { display: flex; align-items: center; gap: 12px; }
+    .table-header h3 { font-size: 13px; font-weight: 700; }
+    .table-count { font-size: 11px; color: var(--text2); background: var(--surface2); padding: 3px 8px; border-radius: 20px; }
+
+    .search-input {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 8px 12px; color: var(--text);
+      font-size: 13px; outline: none; width: 200px;
+    }
+    .search-input:focus { border-color: var(--accent); }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th {
+      text-align: left; padding: 9px 12px;
+      background: var(--surface2); color: var(--text2);
+      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em;
+      cursor: pointer; user-select: none; white-space: nowrap;
+      transition: color .15s;
+    }
+    th:first-child { border-radius: 8px 0 0 8px; }
+    th:last-child  { border-radius: 0 8px 8px 0; }
+    th:hover { color: var(--text); }
+    th.sorted { color: var(--accent); }
+    td { padding: 9px 12px; border-bottom: 1px solid var(--border); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(124,106,255,.05); }
+
+    .badge {
+      display: inline-block; padding: 2px 8px; border-radius: 20px;
+      font-size: 11px; font-weight: 600;
+    }
+    .badge-refund { background: rgba(255,78,106,.15); color: var(--danger); }
+
+    /* Store picker */
+    .store-picker { position: relative; }
+    .store-trigger {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 9px 11px; color: var(--text);
+      font-size: 13px; cursor: pointer; display: flex;
+      justify-content: space-between; align-items: center; gap: 8px;
+      user-select: none; transition: border-color .2s;
+    }
+    .store-trigger:hover { border-color: var(--accent); }
+    .store-trigger.open  { border-color: var(--accent); }
+    .store-trigger-arrow { color: var(--text2); font-size: 11px; transition: transform .2s; }
+    .store-trigger.open .store-trigger-arrow { transform: rotate(180deg); }
+    .store-dropdown {
+      display: none; position: absolute; top: calc(100% + 6px); left: 0;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 8px 0; z-index: 50;
+      min-width: 220px; max-height: 320px; overflow-y: auto;
+      box-shadow: 0 8px 24px rgba(0,0,0,.4);
+    }
+    .store-dropdown.open { display: block; }
+    .store-option {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 14px; cursor: pointer; font-size: 13px;
+      transition: background .1s;
+    }
+    .store-option:hover { background: var(--surface2); }
+    .store-option input[type="checkbox"] {
+      width: 15px; height: 15px; accent-color: var(--accent);
+      cursor: pointer; flex-shrink: 0;
+    }
+    .store-option-divider {
+      border-top: 1px solid var(--border); margin: 4px 0;
+    }
+    .store-option.all-option { font-weight: 600; color: var(--accent); }
+
+    /* Tabs */
+    .tabs {
+      display: flex; gap: 4px;
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px; background: var(--surface);
+    }
+    .tab-btn {
+      padding: 12px 20px; border: none; background: none;
+      color: var(--text2); font-size: 14px; font-weight: 500;
+      cursor: pointer; border-bottom: 2px solid transparent;
+      margin-bottom: -1px; transition: color .15s, border-color .15s;
+    }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+
+    .tab-screen { display: none; }
+    .tab-screen.active { display: block; }
+
+    /* Chopes */
+    .chopes-screen { padding: 24px; max-width: 1600px; margin: 0 auto; }
+    .chopes-header {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 18px 20px; margin-bottom: 16px;
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    }
+    .chopes-header h2 { font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .06em; margin-right: 4px; }
+    .chope-search {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 8px 12px; color: var(--text);
+      font-size: 13px; outline: none; width: 260px;
+    }
+    .chope-search:focus { border-color: var(--accent); }
+    .chopes-kpis { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 16px; }
+    .chope-table-wrap { overflow-x: auto; }
+    .chope-detail {
+      background: var(--surface); border: 1px solid var(--accent);
+      border-radius: 12px; padding: 18px 20px; margin-bottom: 16px;
+      display: none;
+    }
+    .chope-detail-title { font-size: 15px; font-weight: 700; margin-bottom: 14px; }
+    .chope-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .chope-detail-chart { background: var(--surface2); border-radius: 10px; padding: 14px; }
+    .chope-detail-chart h4 { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 12px; }
+    tr.chope-selected td { background: rgba(124,106,255,.1) !important; }
+    .size-toggle {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 20px; padding: 4px 12px; cursor: pointer;
+      font-size: 12px; font-weight: 600; transition: border-color .15s, background .15s;
+      user-select: none;
+    }
+    .size-toggle:has(input:checked) { border-color: var(--accent); color: var(--accent); background: rgba(124,106,255,.08); }
+    .size-toggle input { display: none; }
+    .size-cell { text-align: right; font-variant-numeric: tabular-nums; }
+    .size-cell .qty { font-size: 13px; font-weight: 600; }
+    .size-cell .ltr { font-size: 11px; color: var(--text2); }
+
+    /* Busca de produtos */
+    .search-screen { padding: 24px; max-width: 1600px; margin: 0 auto; }
+    .search-screen-header {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 18px 20px; margin-bottom: 20px;
+    }
+    .search-screen-header h2 {
+      font-size: 11px; font-weight: 600; color: var(--text2);
+      text-transform: uppercase; letter-spacing: .06em; margin-bottom: 14px;
+    }
+    .search-controls {
+      display: grid; grid-template-columns: 1fr 1fr 1fr auto auto;
+      gap: 10px; align-items: end;
+    }
+    .produto-search-input {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 9px 12px; color: var(--text);
+      font-size: 14px; outline: none; transition: border-color .2s;
+    }
+    .produto-search-input:focus { border-color: var(--accent); }
+
+    .results-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 14px; margin-bottom: 20px;
+    }
+    .result-kpi {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px 18px; text-align: center;
+    }
+    .result-kpi-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; }
+    .result-kpi-value { font-size: 24px; font-weight: 800; }
+
+    .produtos-table-section {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 18px 20px; margin-bottom: 20px;
+    }
+    .produtos-table-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px; flex-wrap: wrap; gap: 10px;
+    }
+    .produto-detail-chart {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 18px 20px; display: none;
+    }
+    .produto-detail-chart h3 {
+      font-size: 12px; font-weight: 600; color: var(--text2);
+      text-transform: uppercase; letter-spacing: .05em; margin-bottom: 14px;
+    }
+    tr.selected-row td { background: rgba(124,106,255,.1) !important; }
+
+    /* Loading */
+    .loading-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(15,17,23,.88); z-index: 100;
+      align-items: center; justify-content: center; flex-direction: column; gap: 14px;
+    }
+    .loading-overlay.active { display: flex; }
+    .spinner {
+      width: 44px; height: 44px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    .loading-text { font-size: 13px; color: var(--text2); }
+
+    @keyframes spin  { to { transform: rotate(360deg); } }
+    @keyframes pulse { 50% { opacity: .3; } }
+
+    @media (max-width: 1100px) {
+      .config-grid { grid-template-columns: 1fr 1fr 1fr; }
+      .kpis        { grid-template-columns: repeat(2, 1fr); }
+      .charts-grid { grid-template-columns: 1fr; }
+      .comp-grid   { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 640px) {
+      .main { padding: 14px; }
+      .kpis { grid-template-columns: 1fr 1fr; }
+      .kpi-value { font-size: 20px; }
+      .config-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── Comparativos ─────────────────────────────────────────────────────────── */
+    .comp-screen { padding: 24px; max-width: 1600px; margin: 0 auto; }
+    .comp-screen h2 { font-size: 18px; font-weight: 700; margin-bottom: 18px; }
+
+    .comp-config { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; margin-bottom: 16px; }
+    .comp-config-top { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 16px; }
+    .comp-config-top .field { display: flex; flex-direction: column; gap: 5px; }
+    .comp-config-top label { font-size: 11px; color: var(--text2); font-weight: 500; }
+    .comp-config-top input, .comp-config-top select {
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+      padding: 9px 11px; color: var(--text); font-size: 13px; outline: none;
+    }
+    .comp-config-top input:focus, .comp-config-top select:focus { border-color: var(--accent); }
+
+    .comp-periods-wrap { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-start; }
+    .comp-period-card {
+      background: var(--surface2); border-radius: 10px; padding: 14px 16px;
+      min-width: 220px; flex: 1; max-width: 280px;
+      border-left: 4px solid var(--accent); position: relative;
+    }
+    .comp-period-card .period-label-input {
+      width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--border);
+      color: var(--text); font-size: 13px; font-weight: 600; padding: 2px 0 4px; margin-bottom: 10px; outline: none;
+    }
+    .comp-period-card .period-label-input:focus { border-bottom-color: var(--accent); }
+    .comp-period-dates { display: flex; gap: 8px; margin-bottom: 8px; }
+    .comp-period-dates input[type=date] {
+      flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+      padding: 6px 8px; color: var(--text); font-size: 12px; outline: none;
+    }
+    .comp-period-dates input[type=date]:focus { border-color: var(--accent); }
+    .comp-period-presets { display: flex; gap: 4px; flex-wrap: wrap; }
+    .comp-preset-btn {
+      padding: 3px 8px; font-size: 10px; border-radius: 4px; border: 1px solid var(--border);
+      background: var(--surface); color: var(--text2); cursor: pointer; transition: all .15s;
+    }
+    .comp-preset-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .comp-period-remove {
+      position: absolute; top: 8px; right: 8px; background: none; border: none;
+      color: var(--text2); cursor: pointer; font-size: 14px; line-height: 1;
+      padding: 2px 5px; border-radius: 4px;
+    }
+    .comp-period-remove:hover { color: var(--danger); background: rgba(255,78,106,0.1); }
+    .comp-add-period {
+      min-width: 120px; max-width: 120px; background: var(--surface2); border: 2px dashed var(--border);
+      border-radius: 10px; padding: 14px; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 6px; cursor: pointer; color: var(--text2); font-size: 12px;
+      transition: all .2s;
+    }
+    .comp-add-period:hover { border-color: var(--accent); color: var(--accent); }
+    .comp-add-period span { font-size: 24px; line-height: 1; }
+
+    .comp-kpis-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 16px; }
+    .comp-kpi-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+      padding: 14px 16px; border-top: 3px solid var(--accent);
+    }
+    .comp-kpi-period { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text2); margin-bottom: 10px; }
+    .comp-kpi-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+    .comp-kpi-label { font-size: 10px; color: var(--text2); }
+    .comp-kpi-val { font-size: 15px; font-weight: 700; }
+    .comp-kpi-delta { font-size: 11px; font-weight: 600; margin-top: 8px; }
+    .delta-up { color: var(--success); }
+    .delta-down { color: var(--danger); }
+    .delta-neu { color: var(--text2); }
+
+    .comp-charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+    .comp-chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
+    .comp-chart-card h3 { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 14px; }
+    .comp-chart-card.full { grid-column: 1 / -1; }
+
+    .comp-insights { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; margin-bottom: 16px; }
+    .comp-insights h3 { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 12px; }
+    .insight-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .insight-item:last-child { border-bottom: none; }
+    .insight-icon { font-size: 16px; flex-shrink: 0; }
+
+    .comp-table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; overflow-x: auto; }
+    .comp-table-wrap h3 { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 14px; }
+    .comp-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .comp-table th { text-align: right; padding: 8px 10px; border-bottom: 2px solid var(--border); font-size: 11px; color: var(--text2); white-space: nowrap; }
+    .comp-table th:first-child, .comp-table th:nth-child(2) { text-align: left; }
+    .comp-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: right; }
+    .comp-table td:first-child { text-align: left; font-weight: 600; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .comp-table td:nth-child(2) { text-align: left; }
+    .comp-table tr:hover td { background: var(--surface2); }
+    .comp-table .td-delta-up { color: var(--success); font-weight: 600; }
+    .comp-table .td-delta-down { color: var(--danger); font-weight: 600; }
+    .comp-progress { background: var(--surface2); border-radius: 4px; height: 4px; margin-top: 8px; overflow: hidden; display: none; }
+    .comp-progress-bar { height: 100%; background: var(--accent); border-radius: 4px; transition: width .3s; width: 0%; }
+
+    /* ══════════════════════════════════════════════════════════════════════════
+       REDESIGN COMPACTO — sobrescreve estilos anteriores
+       ══════════════════════════════════════════════════════════════════════════ */
+
+    /* Header mais fino */
+    .header { padding: 8px 16px; }
+    .header-logo { width: 28px; height: 28px; font-size: 13px; border-radius: 7px; }
+    .header-title h1 { font-size: 14px; }
+    .header-title p  { font-size: 11px; }
+
+    /* Tabs mais finas */
+    .tabs { padding: 0 16px; }
+    .tab-btn { padding: 8px 16px; font-size: 13px; }
+
+    /* Screens — menos padding */
+    .chopes-screen, .search-screen, .comp-screen { padding: 12px 16px; }
+    .comp-screen h2 { font-size: 15px; margin-bottom: 12px; }
+
+    /* Config panels */
+    .config-panel { padding: 10px 14px; margin-bottom: 10px; border-radius: 10px; }
+    .config-panel h2 { margin-bottom: 8px; }
+    .chopes-header { padding: 10px 14px; margin-bottom: 10px; border-radius: 10px; }
+
+    /* Fields */
+    .field input, .field select,
+    .field input[type=date] { padding: 7px 9px; font-size: 12px; border-radius: 7px; }
+    .field label { font-size: 10px; }
+    .config-grid { gap: 8px; }
+
+    /* Botões */
+    .btn { padding: 7px 14px; font-size: 12px; border-radius: 7px; }
+
+    /* KPIs compactos */
+    .kpis        { gap: 8px; margin-bottom: 10px; }
+    .chopes-kpis { gap: 8px; margin-bottom: 10px; }
+    .kpi-card    { padding: 10px 12px; border-radius: 9px; }
+    .kpi-label   { font-size: 10px; margin-bottom: 3px; }
+    .kpi-value   { font-size: 20px; }
+    .kpi-delta   { font-size: 10px; }
+
+    /* KPI result cards (busca produtos) */
+    .result-kpi  { padding: 10px 12px; border-radius: 9px; }
+    .result-kpi-label { font-size: 10px; margin-bottom: 3px; }
+    .result-kpi-value { font-size: 18px; }
+    .results-grid { gap: 8px; margin-bottom: 10px; }
+
+    /* Charts */
+    .chart-card  { padding: 10px 14px; border-radius: 10px; }
+    .chart-card h3 { margin-bottom: 8px; }
+    .chart-wrap  { height: 220px; }
+    .chart-wrap.tall { height: 260px; }
+    .charts-grid { gap: 10px; margin-bottom: 10px; }
+
+    /* Tables */
+    .table-section { padding: 10px 14px; border-radius: 10px; }
+    .table-header  { margin-bottom: 8px; }
+    .produtos-table-section { padding: 10px 14px; border-radius: 10px; margin-bottom: 10px; }
+    th { padding: 7px 10px; font-size: 10px; }
+    td { padding: 6px 10px; font-size: 12px; }
+
+    /* Store trigger */
+    .store-trigger  { padding: 7px 9px; font-size: 12px; border-radius: 7px; }
+
+    /* Filtro chopes */
+    .chope-search   { padding: 6px 10px; font-size: 12px; }
+    .size-toggle    { padding: 3px 9px; font-size: 11px; }
+
+    /* Seção comparativo multi-produto */
+    .multi-comp-section { padding: 10px 14px; margin-bottom: 10px; border-radius: 10px; }
+    .multi-comp-section h3 { margin-bottom: 10px; }
+    .multi-kpi-card { padding: 10px 12px; }
+    .multi-kpi-name { font-size: 11px; margin-bottom: 6px; }
+    .multi-kpi-val .value { font-size: 14px; }
+
+    /* Comp screen */
+    .comp-config     { padding: 10px 14px; margin-bottom: 10px; border-radius: 10px; }
+    .comp-chart-card { padding: 10px 14px; border-radius: 10px; }
+    .comp-chart-card h3 { margin-bottom: 8px; }
+    .comp-charts-grid { gap: 10px; margin-bottom: 10px; }
+    .comp-kpis-grid  { gap: 8px; margin-bottom: 10px; }
+    .comp-kpi-card   { padding: 10px 12px; border-radius: 8px; }
+    .comp-insights   { padding: 10px 14px; margin-bottom: 10px; border-radius: 10px; }
+    .comp-table-wrap { padding: 10px 14px; border-radius: 10px; }
+    .comp-period-card { padding: 10px 12px; min-width: 190px; }
+
+    /* Produto detalhe chart */
+    .produto-detail-chart { padding: 10px 14px; border-radius: 10px; margin-bottom: 10px; }
+
+    /* Chope detalhe */
+    .chope-detail      { padding: 12px 14px; margin-bottom: 10px; border-radius: 10px; }
+    .chope-detail-chart { padding: 10px 12px; }
+    .chope-detail-chart h4 { margin-bottom: 8px; }
+
+    /* Linha de status */
+    #chopeStatus, #prodStatus { font-size: 11px; margin-top: 6px; }
+
+    /* Tabela de resultados — linhas produto agrupadas */
+    .prod-group-header td {
+      background: rgba(124,106,255,.1) !important;
+      font-weight: 700; font-size: 12px; color: var(--accent);
+      border-top: 2px solid var(--accent);
+    }
+    .prod-group-total td {
+      background: rgba(124,106,255,.05) !important;
+      font-weight: 700; font-size: 11px; color: var(--text2);
+      border-bottom: 2px solid var(--border);
+    }
+
+    /* ── Tags multi-produto ─────────────────────────────────────────────────── */
+    .prod-tag {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: var(--accent); color: #fff;
+      border-radius: 20px; padding: 3px 10px 3px 12px;
+      font-size: 12px; font-weight: 600; white-space: nowrap;
+    }
+    .prod-tag-remove {
+      cursor: pointer; font-size: 14px; line-height: 1;
+      opacity: .7; transition: opacity .15s;
+    }
+    .prod-tag-remove:hover { opacity: 1; }
+    .prod-tag:nth-child(2) { background: #00d4aa; }
+    .prod-tag:nth-child(3) { background: #ffb547; color: #1a1d27; }
+    .prod-tag:nth-child(4) { background: #ff4e6a; }
+    .prod-tag:nth-child(5) { background: #4eb5ff; color: #1a1d27; }
+
+    /* Tabela comparativo multi-produto */
+    .multi-comp-section {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 18px 20px; margin-bottom: 16px;
+    }
+    .multi-comp-section h3 {
+      font-size: 12px; font-weight: 600; color: var(--text2);
+      text-transform: uppercase; letter-spacing: .05em; margin-bottom: 14px;
+    }
+    .multi-kpi-row {
+      display: grid; gap: 12px; margin-bottom: 16px;
+    }
+    .multi-kpi-card {
+      background: var(--surface2); border-radius: 10px; padding: 14px 16px;
+      border-left: 4px solid var(--accent);
+    }
+    .multi-kpi-name { font-size: 12px; font-weight: 700; margin-bottom: 8px; }
+    .multi-kpi-vals { display: flex; gap: 20px; flex-wrap: wrap; }
+    .multi-kpi-val { }
+    .multi-kpi-val .label { font-size: 10px; color: var(--text2); text-transform: uppercase; }
+    .multi-kpi-val .value { font-size: 16px; font-weight: 700; }
+
+  </style>
+</head>
+<body>
+
+<!-- ── Login Screen ──────────────────────────────────────────────────────── -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">🍺</div>
+    <div class="login-title">Onze Copos</div>
+    <div class="login-sub">Dashboard de Vendas — Zig</div>
+    <input type="password" class="login-input" id="loginInput"
+           placeholder="Digite a senha"
+           onkeydown="if(event.key==='Enter') doLogin()">
+    <button class="login-btn" onclick="doLogin()">Entrar</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<script>
+  // Login isolado — roda antes de qualquer outro script
+  const _SENHA_HASH = 'b4d0745846a51179c314e26a499b328e5da121218811facd44aae91df1976277';
+  const _API_TOKEN  = atob('OGM3YzAxMDk3MTFlZWVmNmM5OTQ0YTgyOWEzYzJmZDZhNDQwMzQ3YjEzMTcyYjQxMGYwMmYxZjNiZjIzOWQ5ZA==');
+
+  async function _sha256(text) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+
+  async function doLogin() {
+    const input = document.getElementById('loginInput').value;
+    const hash  = await _sha256(input);
+    if (hash === _SENHA_HASH) {
+      sessionStorage.setItem('oc_auth',  '1');
+      sessionStorage.setItem('oc_token', _API_TOKEN);
+      document.getElementById('loginScreen').style.display = 'none';
+    } else {
+      const err = document.getElementById('loginError');
+      err.textContent = 'Senha incorreta.';
+      document.getElementById('loginInput').value = '';
+      document.getElementById('loginInput').focus();
+      setTimeout(() => err.textContent = '', 3000);
+    }
+  }
+
+  if (sessionStorage.getItem('oc_auth') === '1') {
+    document.getElementById('loginScreen').style.display = 'none';
+  } else {
+    sessionStorage.removeItem('oc_auth');
+    sessionStorage.removeItem('oc_token');
+    setTimeout(() => document.getElementById('loginInput').focus(), 100);
+  }
+</script>
+
+<!-- Loading overlay -->
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loadingText">Carregando...</div>
+</div>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-logo">OC</div>
+  <div class="header-title">
+    <h1>Onze Copos — Dashboard Zig</h1>
+    <p>Análise de vendas e produtos</p>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('chopes')">🍺 Chopes</button>
+  <button class="tab-btn" onclick="switchTab('busca')">🔍 Busca de Produtos</button>
+  <button class="tab-btn" onclick="switchTab('comp')">📈 Comparativos</button>
+</div>
+
+
+
+<!-- ═══ TELA 2: CHOPES ═══ -->
+<div class="tab-screen active" id="screen-chopes">
+<div class="chopes-screen">
+
+  <!-- Config própria da aba Chopes -->
+  <div class="config-panel">
+    <h2>Configuração</h2>
+    <div class="config-grid">
+      <div class="field">
+        <label>Lojas</label>
+        <div class="store-picker" id="chopeStorePicker">
+          <div class="store-trigger" id="chopeStoreTrigger" onclick="toggleChopeStorePicker()">
+            <span id="chopeStoreSummary">Todas (9)</span>
+            <span class="store-trigger-arrow">▾</span>
+          </div>
+          <div class="store-dropdown" id="chopeStoreDropdown">
+            <div class="store-option all-option">
+              <input type="checkbox" id="chopeCheckAll" onchange="toggleChopeAll(this.checked)">
+              <label for="chopeCheckAll" style="cursor:pointer">Todas as lojas</label>
+            </div>
+            <div class="store-option-divider"></div>
+            <div id="chopeStoreCheckboxes">
+            <div class="store-option"><input type="checkbox" id="chopeL_f3d030c4-3f22-4892-b796-511171299f0f" value="f3d030c4-3f22-4892-b796-511171299f0f" checked onchange="updateChopeStoreSummary()"><label for="chopeL_f3d030c4-3f22-4892-b796-511171299f0f" style="cursor:pointer">Brewteco Gavea</label></div>
+            <div class="store-option"><input type="checkbox" id="chopeL_fcd98c13-ad08-4650-8973-43d64b908849" value="fcd98c13-ad08-4650-8973-43d64b908849" checked onchange="updateChopeStoreSummary()"><label for="chopeL_fcd98c13-ad08-4650-8973-43d64b908849" style="cursor:pointer">Brewteco Botafogo</label></div>
+            <div class="store-option"><input type="checkbox" id="chopeL_dab9c364-a43f-4dbf-a23e-65d053fbf295" value="dab9c364-a43f-4dbf-a23e-65d053fbf295" checked onchange="updateChopeStoreSummary()"><label for="chopeL_dab9c364-a43f-4dbf-a23e-65d053fbf295" style="cursor:pointer">Brewteco Leblon</label></div>
+            <div class="store-option"><input type="checkbox" id="chopeL_806165c1-773b-460e-aabd-9ef46a014b21" value="806165c1-773b-460e-aabd-9ef46a014b21" checked onchange="updateChopeStoreSummary()"><label for="chopeL_806165c1-773b-460e-aabd-9ef46a014b21" style="cursor:pointer">Brewteco Morro da Urca</label></div>
+            <div class="store-option"><input type="checkbox" id="chopeL_bdc030b2-df05-4359-9f3d-bd653955ce9c" value="bdc030b2-df05-4359-9f3d-bd653955ce9c" checked onchange="updateChopeStoreSummary()"><label for="chopeL_bdc030b2-df05-4359-9f3d-bd653955ce9c" style="cursor:pointer">Brewteco Rosas</label></div>
+            <div class="store-option"><input type="checkbox" id="chopeL_ddc67e6b-cd4a-4df8-b7bf-cb80bf662c74" value="ddc67e6b-cd4a-4df8-b7bf-cb80bf662c74" checked onchange="updateChopeStoreSummary()"><label for="chopeL_ddc67e6b-cd4a-4df8-b7bf-cb80bf662c74" style="cursor:pointer">Brewteco Tijuca</label></div>
+            <div class="store-option"><input type="checkbox" id="chopeL_ff3be8c2-1280-425d-a1ac-462e2273fcf0" value="ff3be8c2-1280-425d-a1ac-462e2273fcf0" checked onchange="updateChopeStoreSummary()"><label for="chopeL_ff3be8c2-1280-425d-a1ac-462e2273fcf0" style="cursor:pointer">Brewteco Ferradura</label></div>
+            <div class="store-option"><input type="checkbox" id="chopeL_aec374d7-5e9e-4b08-960c-cf21cfea98c1" value="aec374d7-5e9e-4b08-960c-cf21cfea98c1" checked onchange="updateChopeStoreSummary()"><label for="chopeL_aec374d7-5e9e-4b08-960c-cf21cfea98c1" style="cursor:pointer">rufi.bar</label></div>
+            <div class="store-option"><input type="checkbox" id="chopeL_2c912b55-538b-4462-9b74-1f301db25cb5" value="2c912b55-538b-4462-9b74-1f301db25cb5" checked onchange="updateChopeStoreSummary()"><label for="chopeL_2c912b55-538b-4462-9b74-1f301db25cb5" style="cursor:pointer">Brewteco Laranjeiras</label></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Data início</label>
+        <input type="date" id="chopeDtinicio">
+      </div>
+      <div class="field">
+        <label>Data fim</label>
+        <input type="date" id="chopeDtfim">
+      </div>
+      <button class="btn btn-primary" onclick="buscarChopes()">Buscar</button>
+      <button class="btn btn-secondary" onclick="debugChopes()" style="font-size:12px">🔍 Debug</button>
+    </div>
+  </div>
+
+  <!-- Filtros de busca + tamanho -->
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 20px;margin-bottom:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+    <!-- Tags de filtro de chopes -->
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <div id="chopeTagsWrap" style="
+        display:flex;flex-wrap:wrap;gap:6px;align-items:center;
+        background:var(--surface2);border:1px solid var(--border);
+        border-radius:8px;padding:6px 10px;min-height:36px;min-width:260px;cursor:text"
+        onclick="document.getElementById('chopeSearch').focus()">
+        <div id="chopeTagsList" style="display:contents"></div>
+        <input type="text" id="chopeSearch" placeholder="Filtrar chope... Enter para fixar"
+          style="border:none;background:transparent;color:var(--text);font-size:13px;
+          outline:none;min-width:140px;flex:1"
+          oninput="renderChopesTable()"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();addChopeTag()}">
+      </div>
+      <div style="font-size:11px;color:var(--text2)">Enter ou <b>+</b> para fixar · até 5 filtros</div>
+    </div>
+    <button onclick="addChopeTag()" class="btn btn-secondary" style="padding:6px 12px;font-size:16px" title="Adicionar filtro">+</button>
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+      <span style="font-size:11px;color:var(--text2);font-weight:600">Tamanhos:</span>
+      <label class="size-toggle" id="tog-REGUA"><input type="checkbox" value="REGUA" checked onchange="renderChopesTable()"> REGUA <span style="color:var(--text2)">190ml</span></label>
+      <label class="size-toggle" id="tog-P"><input type="checkbox" value="P" checked onchange="renderChopesTable()"> P <span style="color:var(--text2)">300ml</span></label>
+      <label class="size-toggle" id="tog-G"><input type="checkbox" value="G" checked onchange="renderChopesTable()"> G <span style="color:var(--text2)">450ml</span></label>
+      <label class="size-toggle" id="tog-1L"><input type="checkbox" value="1L" checked onchange="renderChopesTable()"> 1L <span style="color:var(--text2)">1000ml</span></label>
+    </div>
+    <div style="margin-left:auto;font-size:12px;color:var(--text2)" id="chopeStatus">Selecione o período e clique em Buscar.</div>
+  </div>
+
+  <!-- Debug chopes -->
+  <div id="chopeDebugBox" style="display:none;background:#1a1d27;border:1px solid #ffb547;border-radius:10px;padding:14px 16px;margin-bottom:14px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span style="font-size:12px;font-weight:700;color:#ffb547">Estrutura dos produtos CHOPE na API (primeiros 3)</span>
+      <button onclick="document.getElementById('chopeDebugBox').style.display='none'" style="background:none;border:none;color:#9aa0b8;cursor:pointer;font-size:16px">✕</button>
+    </div>
+    <textarea id="chopeDebugOut" readonly style="width:100%;height:200px;background:#0f1117;border:1px solid #2e3144;border-radius:6px;color:#e8eaf0;font-size:11px;font-family:monospace;padding:8px;resize:vertical"></textarea>
+  </div>
+
+  <!-- KPIs -->
+  <div class="chopes-kpis">
+    <div class="kpi-card">
+      <div class="kpi-label">Total litros</div>
+      <div class="kpi-value" id="chopeKpiLitros">—</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Tipos de chope</div>
+      <div class="kpi-value" id="chopeKpiTipos">—</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Unidades vendidas</div>
+      <div class="kpi-value" id="chopeKpiUnidades">—</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Faturamento chope</div>
+      <div class="kpi-value" id="chopeKpiFat">—</div>
+    </div>
+  </div>
+
+  <!-- Detalhe ao clicar -->
+  <div class="chope-detail" id="chopeDetail">
+    <div class="chope-detail-title" id="chopeDetailTitle">—</div>
+    <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+      <button class="btn btn-secondary" onclick="setChopeDetailMetric('litros')" id="btnChopeLitros" style="font-size:12px;padding:6px 14px">Litros</button>
+      <button class="btn btn-secondary" onclick="setChopeDetailMetric('qtd')"    id="btnChopeQtd"    style="font-size:12px;padding:6px 14px">Unidades</button>
+      <button class="btn btn-secondary" onclick="setChopeDetailMetric('fat')"    id="btnChopeFat"    style="font-size:12px;padding:6px 14px">Faturamento</button>
+    </div>
+    <div class="chope-detail-grid">
+      <div class="chope-detail-chart">
+        <h4>Por horário</h4>
+        <div style="position:relative;height:220px"><canvas id="chartChopeHorario"></canvas></div>
+      </div>
+      <div class="chope-detail-chart">
+        <h4>Por tamanho</h4>
+        <div style="position:relative;height:220px"><canvas id="chartChopeTamanho"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ── Breakdown por loja ───────────────────────────────────── -->
+    <div style="margin-top:20px">
+      <h4 style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">📍 Por Loja / Unidade</h4>
+      <div id="chopeLojaBreakdown"></div>
+    </div>
+  </div>
+
+  <!-- Tabela -->
+  <div class="table-section">
+    <div class="table-header">
+      <div style="display:flex;align-items:center;gap:12px">
+        <h3 style="font-size:13px;font-weight:700">Chopes</h3>
+        <span class="table-count" id="chopeTableCount">0</span>
+      </div>
+    </div>
+    <div class="chope-table-wrap">
+      <table id="chopeTable">
+        <thead>
+          <tr>
+            <th>Chope</th>
+            <th style="text-align:right">REGUA<br><span style="font-weight:400;color:var(--text2)">190ml</span></th>
+            <th style="text-align:right">P<br><span style="font-weight:400;color:var(--text2)">300ml</span></th>
+            <th style="text-align:right">G<br><span style="font-weight:400;color:var(--text2)">450ml</span></th>
+            <th style="text-align:right">1L<br><span style="font-weight:400;color:var(--text2)">1000ml</span></th>
+            <th style="text-align:right">Total Litros</th>
+            <th style="text-align:right">Unidades</th>
+            <th style="text-align:right">Faturamento</th>
+          </tr>
+        </thead>
+        <tbody id="chopeTbody">
+          <tr><td colspan="8" style="text-align:center;color:#9aa0b8;padding:32px">Carregue os dados no Dashboard</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+</div><!-- /screen-chopes -->
+
+<!-- ═══ TELA 3: BUSCA DE PRODUTOS ═══ -->
+<div class="tab-screen" id="screen-busca">
+<div class="search-screen">
+
+  <!-- Controles de busca -->
+  <div class="search-screen-header">
+    <h2>Busca de Produtos</h2>
+    <div class="search-controls" style="grid-template-columns:1.5fr 1fr 1fr 1fr 1fr auto auto">
+      <div class="field">
+        <label>Produtos <span id="prodTagCount" style="color:var(--text2);font-weight:400">(0/5)</span></label>
+        <div id="prodTagsWrap" style="
+          display:flex;flex-wrap:wrap;gap:6px;align-items:center;
+          background:var(--surface2);border:1px solid var(--border);
+          border-radius:8px;padding:6px 10px;min-height:38px;cursor:text"
+          onclick="document.getElementById('produtoSearch').focus()">
+          <div id="prodTagsList" style="display:contents"></div>
+          <input type="text" id="produtoSearch" placeholder="Digite e pressione Enter ou +"
+            style="border:none;background:transparent;color:var(--text);font-size:13px;
+            outline:none;min-width:160px;flex:1"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();addProdTag()}"
+            oninput="this.placeholder=''">
+        </div>
+        <div style="font-size:11px;color:var(--text2);margin-top:4px">Enter ou <b>+</b> para adicionar · até 5 produtos</div>
+      </div>
+      <div class="field">
+        <label>Grupo / Categoria</label>
+        <select id="prodGrupoFilter" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:13px;outline:none">
+          <option value="">Todos</option>
+          <option value="CHOPE">CHOPE</option>
+          <option value="CERVEJA">CERVEJA</option>
+          <option value="COMIDA">COMIDA</option>
+          <option value="DRINQUE">DRINQUE</option>
+          <option value="PIZZA">PIZZA</option>
+          <option value="SOFT">SOFT</option>
+          <option value="VINHO">VINHO</option>
+          <option value="LOJINHA">LOJINHA</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Data início</label>
+        <input type="date" id="prodDtinicio">
+      </div>
+      <div class="field">
+        <label>Data fim</label>
+        <input type="date" id="prodDtfim">
+      </div>
+      <div class="field">
+        <label>Lojas</label>
+        <div class="store-picker" id="prodStorePicker">
+          <div class="store-trigger" id="prodStoreTrigger" onclick="toggleProdStorePicker()">
+            <span id="prodStoreSummary">Todas (9)</span>
+            <span class="store-trigger-arrow">▾</span>
+          </div>
+          <div class="store-dropdown" id="prodStoreDropdown">
+            <div class="store-option all-option">
+              <input type="checkbox" id="prodCheckAll" onchange="toggleProdAll(this.checked)">
+              <label for="prodCheckAll" style="cursor:pointer;font-weight:600">Todas</label>
+            </div>
+            <div class="store-option-divider"></div>
+            <div id="prodStoreCheckboxes">
+            <div class="store-option"><input type="checkbox" id="prodL_f3d030c4-3f22-4892-b796-511171299f0f" value="f3d030c4-3f22-4892-b796-511171299f0f" checked onchange="updateProdStoreSummary()"><label for="prodL_f3d030c4-3f22-4892-b796-511171299f0f" style="cursor:pointer">Brewteco Gavea</label></div>
+            <div class="store-option"><input type="checkbox" id="prodL_fcd98c13-ad08-4650-8973-43d64b908849" value="fcd98c13-ad08-4650-8973-43d64b908849" checked onchange="updateProdStoreSummary()"><label for="prodL_fcd98c13-ad08-4650-8973-43d64b908849" style="cursor:pointer">Brewteco Botafogo</label></div>
+            <div class="store-option"><input type="checkbox" id="prodL_dab9c364-a43f-4dbf-a23e-65d053fbf295" value="dab9c364-a43f-4dbf-a23e-65d053fbf295" checked onchange="updateProdStoreSummary()"><label for="prodL_dab9c364-a43f-4dbf-a23e-65d053fbf295" style="cursor:pointer">Brewteco Leblon</label></div>
+            <div class="store-option"><input type="checkbox" id="prodL_806165c1-773b-460e-aabd-9ef46a014b21" value="806165c1-773b-460e-aabd-9ef46a014b21" checked onchange="updateProdStoreSummary()"><label for="prodL_806165c1-773b-460e-aabd-9ef46a014b21" style="cursor:pointer">Brewteco Morro da Urca</label></div>
+            <div class="store-option"><input type="checkbox" id="prodL_bdc030b2-df05-4359-9f3d-bd653955ce9c" value="bdc030b2-df05-4359-9f3d-bd653955ce9c" checked onchange="updateProdStoreSummary()"><label for="prodL_bdc030b2-df05-4359-9f3d-bd653955ce9c" style="cursor:pointer">Brewteco Rosas</label></div>
+            <div class="store-option"><input type="checkbox" id="prodL_ddc67e6b-cd4a-4df8-b7bf-cb80bf662c74" value="ddc67e6b-cd4a-4df8-b7bf-cb80bf662c74" checked onchange="updateProdStoreSummary()"><label for="prodL_ddc67e6b-cd4a-4df8-b7bf-cb80bf662c74" style="cursor:pointer">Brewteco Tijuca</label></div>
+            <div class="store-option"><input type="checkbox" id="prodL_ff3be8c2-1280-425d-a1ac-462e2273fcf0" value="ff3be8c2-1280-425d-a1ac-462e2273fcf0" checked onchange="updateProdStoreSummary()"><label for="prodL_ff3be8c2-1280-425d-a1ac-462e2273fcf0" style="cursor:pointer">Brewteco Ferradura</label></div>
+            <div class="store-option"><input type="checkbox" id="prodL_aec374d7-5e9e-4b08-960c-cf21cfea98c1" value="aec374d7-5e9e-4b08-960c-cf21cfea98c1" checked onchange="updateProdStoreSummary()"><label for="prodL_aec374d7-5e9e-4b08-960c-cf21cfea98c1" style="cursor:pointer">rufi.bar</label></div>
+            <div class="store-option"><input type="checkbox" id="prodL_2c912b55-538b-4462-9b74-1f301db25cb5" value="2c912b55-538b-4462-9b74-1f301db25cb5" checked onchange="updateProdStoreSummary()"><label for="prodL_2c912b55-538b-4462-9b74-1f301db25cb5" style="cursor:pointer">Brewteco Laranjeiras</label></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-secondary" onclick="addProdTag()" title="Adicionar produto à busca" style="font-size:18px;padding:9px 14px">+</button>
+      <button class="btn btn-primary" id="btnBuscarProduto" onclick="buscarProdutos()">Buscar</button>
+      <button class="btn btn-secondary" id="btnExportProdutos" onclick="exportProdutosCSV()">↓ CSV</button>
+    </div>
+    <div style="margin-top:10px;font-size:12px;color:var(--text2)" id="prodStatus">Selecione o período e busque um produto.</div>
+  </div>
+
+  <!-- KPIs resultado -->
+  <div class="results-grid" id="prodKpis" style="display:none;grid-template-columns:repeat(4,1fr)">
+    <div class="result-kpi">
+      <div class="result-kpi-label">Faturamento dos resultados</div>
+      <div class="result-kpi-value" id="prodKpiFat">—</div>
+      <div style="font-size:11px;color:var(--accent);margin-top:4px" id="prodKpiPctTotal"></div>
+    </div>
+    <div class="result-kpi">
+      <div class="result-kpi-label">Quantidade vendida</div>
+      <div class="result-kpi-value" id="prodKpiQtd">—</div>
+    </div>
+    <div class="result-kpi">
+      <div class="result-kpi-label">Litros (chope)</div>
+      <div class="result-kpi-value" id="prodKpiLitros">—</div>
+    </div>
+    <div class="result-kpi">
+      <div class="result-kpi-label">Total do período (todas categorias)</div>
+      <div class="result-kpi-value" id="prodKpiTotalPeriodo">—</div>
+    </div>
+  </div>
+
+  <!-- Gráfico por loja do produto selecionado -->
+  <div class="produto-detail-chart" id="prodChart">
+    <h3 id="prodChartTitle">Produto — por loja</h3>
+    <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+      <button class="btn btn-secondary" id="btnProdFat"    onclick="setProdMetric('fat')"    style="font-size:12px;padding:6px 14px">Faturamento</button>
+      <button class="btn btn-secondary" id="btnProdQtd"    onclick="setProdMetric('qtd')"    style="font-size:12px;padding:6px 14px">Qtd. vendida</button>
+      <button class="btn btn-secondary" id="btnProdLitros" onclick="setProdMetric('litros')" style="font-size:12px;padding:6px 14px">Litros</button>
+    </div>
+    <div class="chart-wrap" style="height:240px"><canvas id="chartProdDetalhe"></canvas></div>
+  </div>
+
+  <!-- Comparativo multi-produto -->
+  <div class="multi-comp-section" id="multiCompSection" style="display:none">
+    <h3>📊 Comparativo entre produtos</h3>
+    <div id="multiKpiRow" class="multi-kpi-row"></div>
+    <div style="height:280px;position:relative"><canvas id="chartMultiComp"></canvas></div>
+  </div>
+
+  <!-- Tabela resultados -->
+  <div class="produtos-table-section" id="prodTableSection" style="display:none">
+    <div class="produtos-table-header">
+      <div style="display:flex;align-items:center;gap:12px">
+        <h3 style="font-size:13px;font-weight:700">Resultados</h3>
+        <span class="table-count" id="prodTableCount">0 produtos</span>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Produto</th>
+            <th>Categoria</th>
+            <th>Bar / Loja</th>
+            <th>Evento</th>
+            <th style="text-align:right">Qtd</th>
+            <th style="text-align:right">Litros</th>
+            <th style="text-align:right">Valor unit.</th>
+            <th style="text-align:right">Valor total</th>
+          </tr>
+        </thead>
+        <tbody id="prodTbody">
+          <tr><td colspan="8" style="text-align:center;color:#9aa0b8;padding:32px">Faça uma busca acima</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+</div><!-- /screen-busca -->
+
+<!-- ═══ TELA 4: COMPARATIVOS ═══ -->
+<div class="tab-screen" id="screen-comp">
+<div class="comp-screen">
+  <h2>📈 Comparativos de Vendas</h2>
+
+  <!-- Config top: lojas + categoria + produto -->
+  <div class="comp-config">
+    <div class="comp-config-top">
+      <div class="field">
+        <label>Lojas</label>
+        <div class="store-picker" id="compStorePicker">
+          <div class="store-trigger" id="compStoreTrigger" onclick="toggleCompStorePicker()">
+            <span id="compStoreSummary">Todas (9)</span>
+            <span class="store-trigger-arrow">▾</span>
+          </div>
+          <div class="store-dropdown" id="compStoreDropdown">
+            <div class="store-option all-option">
+              <input type="checkbox" id="compCheckAll" onchange="toggleCompAll(this.checked)">
+              <label for="compCheckAll" style="cursor:pointer;font-weight:600">Todas</label>
+            </div>
+            <div class="store-option-divider"></div>
+            <div id="compStoreCheckboxes">
+            <div class="store-option"><input type="checkbox" id="compL_f3d030c4-3f22-4892-b796-511171299f0f" value="f3d030c4-3f22-4892-b796-511171299f0f" checked onchange="updateCompStoreSummary()"><label for="compL_f3d030c4-3f22-4892-b796-511171299f0f" style="cursor:pointer">Brewteco Gavea</label></div>
+            <div class="store-option"><input type="checkbox" id="compL_fcd98c13-ad08-4650-8973-43d64b908849" value="fcd98c13-ad08-4650-8973-43d64b908849" checked onchange="updateCompStoreSummary()"><label for="compL_fcd98c13-ad08-4650-8973-43d64b908849" style="cursor:pointer">Brewteco Botafogo</label></div>
+            <div class="store-option"><input type="checkbox" id="compL_dab9c364-a43f-4dbf-a23e-65d053fbf295" value="dab9c364-a43f-4dbf-a23e-65d053fbf295" checked onchange="updateCompStoreSummary()"><label for="compL_dab9c364-a43f-4dbf-a23e-65d053fbf295" style="cursor:pointer">Brewteco Leblon</label></div>
+            <div class="store-option"><input type="checkbox" id="compL_806165c1-773b-460e-aabd-9ef46a014b21" value="806165c1-773b-460e-aabd-9ef46a014b21" checked onchange="updateCompStoreSummary()"><label for="compL_806165c1-773b-460e-aabd-9ef46a014b21" style="cursor:pointer">Brewteco Morro da Urca</label></div>
+            <div class="store-option"><input type="checkbox" id="compL_bdc030b2-df05-4359-9f3d-bd653955ce9c" value="bdc030b2-df05-4359-9f3d-bd653955ce9c" checked onchange="updateCompStoreSummary()"><label for="compL_bdc030b2-df05-4359-9f3d-bd653955ce9c" style="cursor:pointer">Brewteco Rosas</label></div>
+            <div class="store-option"><input type="checkbox" id="compL_ddc67e6b-cd4a-4df8-b7bf-cb80bf662c74" value="ddc67e6b-cd4a-4df8-b7bf-cb80bf662c74" checked onchange="updateCompStoreSummary()"><label for="compL_ddc67e6b-cd4a-4df8-b7bf-cb80bf662c74" style="cursor:pointer">Brewteco Tijuca</label></div>
+            <div class="store-option"><input type="checkbox" id="compL_ff3be8c2-1280-425d-a1ac-462e2273fcf0" value="ff3be8c2-1280-425d-a1ac-462e2273fcf0" checked onchange="updateCompStoreSummary()"><label for="compL_ff3be8c2-1280-425d-a1ac-462e2273fcf0" style="cursor:pointer">Brewteco Ferradura</label></div>
+            <div class="store-option"><input type="checkbox" id="compL_aec374d7-5e9e-4b08-960c-cf21cfea98c1" value="aec374d7-5e9e-4b08-960c-cf21cfea98c1" checked onchange="updateCompStoreSummary()"><label for="compL_aec374d7-5e9e-4b08-960c-cf21cfea98c1" style="cursor:pointer">rufi.bar</label></div>
+            <div class="store-option"><input type="checkbox" id="compL_2c912b55-538b-4462-9b74-1f301db25cb5" value="2c912b55-538b-4462-9b74-1f301db25cb5" checked onchange="updateCompStoreSummary()"><label for="compL_2c912b55-538b-4462-9b74-1f301db25cb5" style="cursor:pointer">Brewteco Laranjeiras</label></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Categoria</label>
+        <select id="compCategoria" style="min-width:140px">
+          <option value="">Todas</option>
+          <option value="CHOPE">CHOPE</option>
+          <option value="CERVEJA">CERVEJA</option>
+          <option value="COMIDA">COMIDA</option>
+          <option value="DRINQUE">DRINQUE</option>
+          <option value="PIZZA">PIZZA</option>
+          <option value="SOFT">SOFT</option>
+          <option value="VINHO">VINHO</option>
+          <option value="LOJINHA">LOJINHA</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Produto (opcional)</label>
+        <input type="text" id="compProduto" placeholder="Ex: Pilsenzinha, Batata..." style="min-width:220px">
+      </div>
+      <button class="btn btn-primary" onclick="buscarComparativo()" style="align-self:flex-end">Analisar</button>
+    </div>
+    <!-- Barra de progresso -->
+    <div class="comp-progress" id="compProgress">
+      <div class="comp-progress-bar" id="compProgressBar"></div>
+    </div>
+    <div style="font-size:12px;color:var(--text2);margin-top:6px" id="compStatus">Configure os períodos abaixo e clique em Analisar.</div>
+
+    <!-- Períodos -->
+    <div style="margin-top:16px">
+      <div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Períodos para comparar</div>
+      <div class="comp-periods-wrap" id="compPeriodsWrap">
+        <!-- gerado por JS -->
+        <div class="comp-add-period" onclick="addCompPeriod()" id="compAddBtn">
+          <span>＋</span>
+          <div>Adicionar período</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPIs por período -->
+  <div class="comp-kpis-grid" id="compKpis" style="display:none"></div>
+
+  <!-- Insights automáticos -->
+  <div class="comp-insights" id="compInsights" style="display:none">
+    <h3>💡 Insights</h3>
+    <div id="compInsightsList"></div>
+  </div>
+
+  <!-- Gráficos -->
+  <div class="comp-charts-grid" id="compCharts" style="display:none">
+    <div class="comp-chart-card">
+      <h3>💰 Faturamento por Período</h3>
+      <div style="height:260px"><canvas id="compChartFat"></canvas></div>
+    </div>
+    <div class="comp-chart-card">
+      <h3>📦 Unidades Vendidas por Período</h3>
+      <div style="height:260px"><canvas id="compChartQtd"></canvas></div>
+    </div>
+    <div class="comp-chart-card full">
+      <h3>📊 Mix por Categoria — por Período</h3>
+      <div style="height:280px"><canvas id="compChartMix"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Tabela -->
+  <div class="comp-table-wrap" id="compTableWrap" style="display:none">
+    <h3>Produtos — detalhamento por período</h3>
+    <div style="margin-bottom:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <input type="text" id="compTableSearch" placeholder="Filtrar produto..." oninput="renderCompTable()"
+        style="padding:7px 11px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;outline:none;min-width:200px">
+      <button class="btn btn-secondary" onclick="exportCompCSV()" style="font-size:12px;padding:7px 14px">↓ CSV</button>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="comp-table" id="compTable">
+        <thead><tr><th>Produto</th><th>Cat.</th><th>—</th></tr></thead>
+        <tbody id="compTbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+</div><!-- /screen-comp -->
+
+
+
+<script>
+  // ── Config ──────────────────────────────────────────────────────────────────
+  const BASE = 'https://api.zigcore.com.br/integration';
+
+  const LOJAS_FIXAS = [
+    { id: 'f3d030c4-3f22-4892-b796-511171299f0f', name: 'Brewteco Gavea' },
+    { id: 'fcd98c13-ad08-4650-8973-43d64b908849', name: 'Brewteco Botafogo' },
+    { id: 'dab9c364-a43f-4dbf-a23e-65d053fbf295', name: 'Brewteco Leblon' },
+    { id: '806165c1-773b-460e-aabd-9ef46a014b21', name: 'Brewteco Morro da Urca' },
+    { id: 'bdc030b2-df05-4359-9f3d-bd653955ce9c', name: 'Brewteco Rosas' },
+    { id: 'ddc67e6b-cd4a-4df8-b7bf-cb80bf662c74', name: 'Brewteco Tijuca' },
+    { id: 'ff3be8c2-1280-425d-a1ac-462e2273fcf0', name: 'Brewteco Ferradura' },
+    { id: 'aec374d7-5e9e-4b08-960c-cf21cfea98c1', name: 'rufi.bar' },
+    { id: '2c912b55-538b-4462-9b74-1f301db25cb5', name: 'Brewteco Laranjeiras' }
+  ];
+
+  // ── State ───────────────────────────────────────────────────────────────────
+  let lojas           = LOJAS_FIXAS;
+  let allData         = [];
+  let allDataAnterior = [];
+  let dataByLoja      = {};   // { lojaId: [...items] }
+  let lojaMetric      = 'fat';
+  let sortCol         = 'count';
+  let sortDir         = -1;
+  let searchTerm      = '';
+  let charts          = {};
+
+  // ── Helpers ─────────────────────────────────────────────────────────────────
+  const fmt    = v  => (v / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const fmtNum = v  => v.toLocaleString('pt-BR');
+  const fmtL   = v  => v.toFixed(2).replace('.', ',') + ' L';
+  const trunc  = (s, n) => s && s.length > n ? s.slice(0, n) + '…' : (s || '');
+
+  function formatDate(d) {
+    if (!d) return '';
+    const [y, m, dd] = d.split('-');
+    return `${dd}/${m}/${y}`;
+  }
+
+  function getDefaultDates() {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - 6);
+    return {
+      start: start.toISOString().split('T')[0],
+      end:   end.toISOString().split('T')[0]
+    };
+  }
+
+  function getPreviousPeriod(start, end) {
+    const s    = new Date(start + 'T00:00:00');
+    const e    = new Date(end   + 'T00:00:00');
+    const days = Math.round((e - s) / 86400000) + 1;
+    const prevEnd   = new Date(s); prevEnd.setDate(prevEnd.getDate() - 1);
+    const prevStart = new Date(prevEnd); prevStart.setDate(prevStart.getDate() - days + 1);
+    return {
+      start: prevStart.toISOString().split('T')[0],
+      end:   prevEnd.toISOString().split('T')[0]
+    };
+  }
+
+  // ── API ──────────────────────────────────────────────────────────────────────
+  async function apiFetch(path) {
+    const token = sessionStorage.getItem('oc_token') || '';
+    const res = await fetch(`${BASE}${path}`, { headers: { Authorization: token } });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(`HTTP ${res.status}${err.message ? ' — ' + err.message : ''}`);
+    }
+    return res.json();
+  }
+
+  // Normaliza resposta — API pode retornar array direto ou { data: [...] } ou { items: [...] }
+  function normalizeResponse(raw) {
+    if (Array.isArray(raw)) return raw;
+    if (raw && Array.isArray(raw.data))    return raw.data;
+    if (raw && Array.isArray(raw.items))   return raw.items;
+    if (raw && Array.isArray(raw.results)) return raw.results;
+    if (raw && Array.isArray(raw.content)) return raw.content;
+    console.warn('[ZIG API] Formato inesperado:', raw);
+    return [];
+  }
+
+  // API limita 5 dias por chamada — divide em chunks automaticamente
+  function splitDates(dtinicio, dtfim, chunkDays = 5) {
+    const chunks = [];
+    let cur = new Date(dtinicio + 'T00:00:00');
+    const end = new Date(dtfim + 'T00:00:00');
+    while (cur <= end) {
+      const chunkEnd = new Date(cur);
+      chunkEnd.setDate(chunkEnd.getDate() + chunkDays - 1);
+      if (chunkEnd > end) chunkEnd.setTime(end.getTime());
+      chunks.push({
+        start: cur.toISOString().split('T')[0],
+        end:   chunkEnd.toISOString().split('T')[0]
+      });
+      cur = new Date(chunkEnd);
+      cur.setDate(cur.getDate() + 1);
+    }
+    return chunks;
+  }
+
+  async function fetchSaida(lojaId, dtinicio, dtfim) {
+    const chunks = splitDates(dtinicio, dtfim, 5);
+    const results = await Promise.all(
+      chunks.map(c => apiFetch(`/erp/saida-produtos?loja=${lojaId}&dtinicio=${c.start}&dtfim=${c.end}`)
+        .then(normalizeResponse)
+        .catch(() => []))
+    );
+    return results.flat();
+  }
+
+  // ── Store picker ─────────────────────────────────────────────────────────────
+  function init() {
+    lojas = LOJAS_FIXAS;
+    const container = document.getElementById('storeCheckboxes');
+    if (container) {
+      container.innerHTML = lojas.map(l => `
+        <div class="store-option">
+          <input type="checkbox" id="loja_${l.id}" value="${l.id}" checked onchange="updateStoreSummary()">
+          <label for="loja_${l.id}" style="cursor:pointer">${l.name}</label>
+        </div>
+      `).join('');
+      const checkAll = document.getElementById('checkAll');
+      if (checkAll) checkAll.checked = true;
+      updateStoreSummary();
+    }
+    if (typeof setStatus === 'function') setStatus('ok', `${lojas.length} lojas — selecione o período e clique em Buscar`);
+  }
+
+  function toggleStorePicker() {
+    const trigger  = document.getElementById('storeTrigger');
+    const dropdown = document.getElementById('storeDropdown');
+    trigger.classList.toggle('open');
+    dropdown.classList.toggle('open');
+  }
+
+  function toggleAll(checked) {
+    lojas.forEach(l => {
+      document.getElementById('loja_' + l.id).checked = checked;
+    });
+    updateStoreSummary();
+  }
+
+  function updateStoreSummary() {
+    const checked = getCheckedLojas();
+    const all     = checked.length === lojas.length;
+    document.getElementById('checkAll').checked = all;
+    document.getElementById('storeSummary').textContent =
+      all ? `Todas (${lojas.length})` :
+      checked.length === 0 ? 'Nenhuma selecionada' :
+      checked.length === 1 ? lojas.find(l => l.id === checked[0])?.name :
+      `${checked.length} lojas selecionadas`;
+  }
+
+  function getCheckedLojas() {
+    return lojas
+      .filter(l => document.getElementById('loja_' + l.id)?.checked)
+      .map(l => l.id);
+  }
+
+  // Fechar picker ao clicar fora
+  document.addEventListener('click', e => {
+    const picker = document.getElementById('storePicker');
+    if (!picker.contains(e.target)) {
+      document.getElementById('storeTrigger').classList.remove('open');
+      document.getElementById('storeDropdown').classList.remove('open');
+    }
+  });
+
+  // ── Load data ────────────────────────────────────────────────────────────────
+  async function loadData() {
+    const dtinicio   = document.getElementById('dtinicio').value;
+    const dtfim      = document.getElementById('dtfim').value;
+    const comparar   = document.getElementById('toggleComparativo').checked;
+    const checkedIds = getCheckedLojas();
+
+    if (!dtinicio || !dtfim) { alert('Selecione o período.'); return; }
+    if (checkedIds.length === 0) { alert('Selecione ao menos uma loja.'); return; }
+
+    showLoading(true, 'Buscando dados...');
+
+    try {
+      const targetLojas = lojas.filter(l => checkedIds.includes(l.id));
+
+      // Fetch atual — guarda por loja
+      const results = await Promise.all(
+        targetLojas.map(l => fetchSaida(l.id, dtinicio, dtfim).catch(() => []))
+      );
+      dataByLoja = {};
+      results.forEach((items, i) => {
+        dataByLoja[targetLojas[i].id] = (items || []).filter(Boolean);
+      });
+      allData = results.flat().filter(Boolean);
+
+      if (comparar) {
+        showLoading(true, 'Buscando período anterior...');
+        const prev = getPreviousPeriod(dtinicio, dtfim);
+        const prevRes = await Promise.all(
+          targetLojas.map(l => fetchSaida(l.id, prev.start, prev.end).catch(() => []))
+        );
+        allDataAnterior = prevRes.flat().filter(Boolean);
+      } else {
+        allDataAnterior = [];
+      }
+
+      populateEventFilter();
+      renderAll();
+      if (document.getElementById('screen-chopes').classList.contains('active')) renderChopes();
+
+      const total = allData.filter(d => !d.isRefunded).reduce((s, d) => s + d.count, 0);
+      setStatus('ok', `${allData.length} registros · ${fmtNum(total)} itens — ${formatDate(dtinicio)} a ${formatDate(dtfim)}`);
+    } catch (e) {
+      setStatus('error', `Erro: ${e.message}`);
+    } finally {
+      showLoading(false);
+    }
+  }
+
+  // ── Filters ──────────────────────────────────────────────────────────────────
+  function populateEventFilter() {
+    const eventos = [...new Set(allData.map(d => d.eventName).filter(Boolean))].sort();
+    const sel = document.getElementById('filterEvento');
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">Todos os eventos</option>' +
+      eventos.map(e => `<option value="${e}" ${e === cur ? 'selected' : ''}>${e}</option>`).join('');
+
+    // Atualiza filtro de grupos com categorias reais dos dados
+    const selGrupo = document.getElementById('filterGrupo');
+    const curGrupo = selGrupo.value;
+    const grupos = [...new Set(allData.map(d => d.productCategory).filter(Boolean))].sort();
+    selGrupo.innerHTML = '<option value="">Todos</option>' +
+      grupos.map(g => `<option value="${g}" ${g === curGrupo ? 'selected' : ''}>${g}</option>`).join('');
+  }
+
+  function getFiltered(data) {
+    const evento  = document.getElementById('filterEvento')?.value  || '';
+    const grupo   = document.getElementById('filterGrupo')?.value   || '';
+    const produto = (document.getElementById('filterProduto')?.value || '').trim().toLowerCase();
+    return data.filter(d => {
+      if (evento  && d.eventName !== evento) return false;
+      if (grupo   && (d.productCategory || '').toUpperCase() !== grupo.toUpperCase()) return false;
+      if (produto && !(d.productName || '').toLowerCase().includes(produto)) return false;
+      return true;
+    });
+  }
+
+  // ── Render all ───────────────────────────────────────────────────────────────
+  function renderAll() {
+    const data     = getFiltered(allData);
+    const dataAnt  = allDataAnterior.length ? getFiltered(allDataAnterior) : [];
+    renderKPIs(data, dataAnt);
+    renderCharts(data);
+    renderLojasChart();
+    renderComparativo(data, dataAnt);
+    renderTable(data);
+  }
+
+  // ── KPIs ─────────────────────────────────────────────────────────────────────
+  function calcLitros(item) {
+    // 1) Tenta fractionalAmount da API
+    if (item.fractionalAmount && item.fractionUnit === 'L') return item.fractionalAmount;
+    // 2) Tenta pelo nome do produto (padrão REGUA/P/G/1L)
+    let parsed = parseChopeName(item.productName);
+    // 3) Tenta pelas additions (isModification)
+    if (!parsed && item.additions && item.additions.length > 0) {
+      for (const add of item.additions) {
+        const ap = parseChopeName(add.name);
+        if (ap && ap.liters > 0) { parsed = ap; break; }
+      }
+    }
+    return parsed && parsed.liters > 0 ? parsed.liters * item.count : 0;
+  }
+
+  function calcKPIs(data) {
+    const d = data.filter(x => !x.isRefunded);
+    const faturamento = d.reduce((s, x) => s + x.unitValue * x.count - (x.discountValue || 0), 0);
+    const quantidade  = d.reduce((s, x) => s + x.count, 0);
+    // Ticket médio = faturamento / nº de transações únicas
+    const transacoes  = new Set(d.map(x => x.transactionId).filter(Boolean)).size || quantidade;
+    const ticket      = transacoes > 0 ? faturamento / transacoes : 0;
+    return {
+      faturamento,
+      quantidade,
+      ticket,
+      litros:   d.reduce((s, x) => s + calcLitros(x), 0),  // mantém para outros usos
+      produtos: new Set(d.map(x => x.productName)).size
+    };
+  }
+
+  function renderKPIs(data, dataAnt) {
+    const kpi  = calcKPIs(data);
+    const prev = dataAnt.length ? calcKPIs(dataAnt) : null;
+
+    document.getElementById('kpiFaturamento').textContent = fmt(kpi.faturamento);
+    document.getElementById('kpiQuantidade').textContent  = fmtNum(kpi.quantidade);
+    document.getElementById('kpiTicket').textContent      = fmt(kpi.ticket);
+    document.getElementById('kpiProdutos').textContent    = fmtNum(kpi.produtos);
+
+    const pairs = [
+      ['deltaFaturamento', kpi.faturamento, prev?.faturamento],
+      ['deltaQuantidade',  kpi.quantidade,  prev?.quantidade],
+      ['deltaTicket',      kpi.ticket,      prev?.ticket],
+      ['deltaProdutos',    kpi.produtos,    prev?.produtos],
+    ];
+    pairs.forEach(([id, cur, ant]) => {
+      const el = document.getElementById(id);
+      if (ant == null || ant === 0) { el.textContent = ''; el.className = 'kpi-delta'; return; }
+      const pct = ((cur - ant) / ant * 100).toFixed(1);
+      const up  = cur >= ant;
+      el.textContent = `${up ? '▲' : '▼'} ${Math.abs(pct)}% vs período anterior`;
+      el.className   = 'kpi-delta ' + (up ? 'up' : 'down');
+    });
+  }
+
+  // ── Charts ───────────────────────────────────────────────────────────────────
+  const PALETTE = [
+    '#7c6aff','#00d4aa','#ffb547','#ff4e6a','#4eb5ff',
+    '#a78bfa','#34d399','#fb923c','#f87171','#60a5fa'
+  ];
+
+  function destroyChart(id) {
+    if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+  }
+
+  function renderCharts(data) {
+    const d = data.filter(x => !x.isRefunded);
+
+    // Aggregate by product
+    const byProduct = {};
+    for (const x of d) {
+      if (!byProduct[x.productName]) byProduct[x.productName] = { count: 0, value: 0, litros: 0 };
+      byProduct[x.productName].count += x.count;
+      byProduct[x.productName].value += x.unitValue * x.count - (x.discountValue || 0);
+      byProduct[x.productName].litros += calcLitros(x);
+    }
+
+    // Aggregate by category
+    const byCat = {};
+    for (const x of d) {
+      const cat = x.productCategory || 'Sem categoria';
+      if (!byCat[cat]) byCat[cat] = 0;
+      byCat[cat] += x.unitValue * x.count - (x.discountValue || 0);
+    }
+
+    // Chope por data (eventDate) — usa calcLitros para pegar litros reais
+    const chopeByDate = {};
+    for (const x of d) {
+      const litros = calcLitros(x);
+      if (litros > 0) {
+        const date = x.eventDate ? x.eventDate.split('T')[0] : 'N/A';
+        if (!chopeByDate[date]) chopeByDate[date] = 0;
+        chopeByDate[date] += litros;
+      }
+    }
+
+    const top10Qtd = Object.entries(byProduct).sort((a,b) => b[1].count - a[1].count).slice(0, 10);
+    const top10Val = Object.entries(byProduct).sort((a,b) => b[1].value - a[1].value).slice(0, 10);
+    const catArr   = Object.entries(byCat).sort((a,b) => b[1] - a[1]);
+    const chopeArr = Object.entries(chopeByDate).sort((a,b) => a[0].localeCompare(b[0]));
+
+    const baseBarOpts = (isCurrency = false) => ({
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          grid: { color: '#2e3144' },
+          ticks: {
+            color: '#9aa0b8',
+            callback: isCurrency ? v => 'R$ ' + v.toLocaleString('pt-BR') : undefined
+          }
+        },
+        y: {
+          grid: { display: false },
+          ticks: { color: '#9aa0b8', font: { size: 11 } }
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => isCurrency
+              ? ` R$ ${ctx.raw.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+              : ` ${ctx.raw.toLocaleString('pt-BR')}`
+          }
+        }
+      }
+    });
+
+    // Chart 1 — Top10 qtd
+    destroyChart('chartQtd');
+    charts['chartQtd'] = new Chart(document.getElementById('chartQtd'), {
+      type: 'bar',
+      data: {
+        labels: top10Qtd.map(([n]) => trunc(n, 22)),
+        datasets: [{ data: top10Qtd.map(([,v]) => v.count), backgroundColor: PALETTE, borderRadius: 5 }]
+      },
+      options: baseBarOpts(false)
+    });
+
+    // Chart 2 — Top10 valor
+    destroyChart('chartValor');
+    charts['chartValor'] = new Chart(document.getElementById('chartValor'), {
+      type: 'bar',
+      data: {
+        labels: top10Val.map(([n]) => trunc(n, 22)),
+        datasets: [{ data: top10Val.map(([,v]) => v.value / 100), backgroundColor: PALETTE, borderRadius: 5 }]
+      },
+      options: baseBarOpts(true)
+    });
+
+    // Chart 3 — Por categoria
+    destroyChart('chartCat');
+    charts['chartCat'] = new Chart(document.getElementById('chartCat'), {
+      type: 'doughnut',
+      data: {
+        labels: catArr.map(([c]) => c),
+        datasets: [{
+          data: catArr.map(([,v]) => v / 100),
+          backgroundColor: PALETTE,
+          borderWidth: 0,
+          hoverOffset: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'right',
+            labels: { color: '#9aa0b8', font: { size: 11 }, boxWidth: 11, padding: 10 }
+          },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.label}: ${ctx.raw.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`
+            }
+          }
+        }
+      }
+    });
+
+    // Chart 4 — Faturamento por dia (line)
+    const fatByDate = {};
+    for (const x of d) {
+      const date = (x.eventDate || x.transactionDate || '').split('T')[0];
+      if (!date) continue;
+      if (!fatByDate[date]) fatByDate[date] = 0;
+      fatByDate[date] += x.unitValue * x.count - (x.discountValue || 0);
+    }
+    const fatDiasArr = Object.entries(fatByDate).sort((a,b) => a[0].localeCompare(b[0]));
+
+    destroyChart('chartFatDia');
+    if (fatDiasArr.length > 0) {
+      charts['chartFatDia'] = new Chart(document.getElementById('chartFatDia'), {
+        type: 'line',
+        data: {
+          labels: fatDiasArr.map(([date]) => formatDate(date)),
+          datasets: [{
+            label: 'Faturamento',
+            data: fatDiasArr.map(([,v]) => +(v/100).toFixed(2)),
+            borderColor: '#7c6aff',
+            backgroundColor: 'rgba(124,106,255,.12)',
+            fill: true, tension: 0.4,
+            pointRadius: fatDiasArr.length > 30 ? 2 : 5,
+            pointBackgroundColor: '#7c6aff',
+            pointBorderColor: '#0f1117', pointBorderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          scales: {
+            x: { grid:{color:'#2e3144'}, ticks:{color:'#9aa0b8', maxRotation:45} },
+            y: { grid:{color:'#2e3144'}, ticks:{color:'#9aa0b8', callback: v => 'R$'+v.toLocaleString('pt-BR',{maximumFractionDigits:0})} }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => ` R$ ${ctx.raw.toLocaleString('pt-BR',{minimumFractionDigits:2})}` } }
+          }
+        }
+      });
+    }
+
+    // Chart 5 — Faturamento por horário (bar)
+    const fatByHour = Array(24).fill(0);
+    const qtyByHour = Array(24).fill(0);
+    for (const x of d) {
+      const dt = x.transactionDate || x.eventDate;
+      if (!dt) continue;
+      const h = new Date(dt).getHours();
+      if (h >= 0 && h < 24) {
+        fatByHour[h] += x.unitValue * x.count - (x.discountValue || 0);
+        qtyByHour[h] += x.count;
+      }
+    }
+    const horasAtivas = fatByHour.map((v,h) => ({h,v,q:qtyByHour[h]})).filter(x => x.v > 0);
+
+    destroyChart('chartFatHora');
+    if (horasAtivas.length > 0) {
+      charts['chartFatHora'] = new Chart(document.getElementById('chartFatHora'), {
+        type: 'bar',
+        data: {
+          labels: horasAtivas.map(x => x.h+'h'),
+          datasets: [
+            {
+              label: 'Faturamento',
+              data: horasAtivas.map(x => +(x.v/100).toFixed(2)),
+              backgroundColor: 'rgba(124,106,255,.75)',
+              borderColor: '#7c6aff', borderWidth: 1, borderRadius: 4,
+              yAxisID: 'y'
+            },
+            {
+              label: 'Qtd. vendida',
+              data: horasAtivas.map(x => x.q),
+              type: 'line',
+              borderColor: '#00d4aa',
+              backgroundColor: 'rgba(0,212,170,.1)',
+              fill: false, tension: 0.4,
+              pointRadius: 4, pointBackgroundColor: '#00d4aa',
+              yAxisID: 'y2'
+            }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { position:'top', labels:{color:'#9aa0b8',font:{size:11},boxWidth:12} },
+            tooltip: {
+              callbacks: {
+                label: ctx => ctx.datasetIndex === 0
+                  ? ` R$ ${ctx.raw.toLocaleString('pt-BR',{minimumFractionDigits:2})}`
+                  : ` ${fmtNum(ctx.raw)} itens`
+              }
+            }
+          },
+          scales: {
+            x:  { grid:{color:'#2e3144'}, ticks:{color:'#9aa0b8'} },
+            y:  { grid:{color:'#2e3144'}, ticks:{color:'#9aa0b8', callback: v => 'R$'+v.toLocaleString('pt-BR',{maximumFractionDigits:0})}, position:'left' },
+            y2: { grid:{display:false},   ticks:{color:'#00d4aa'}, position:'right' }
+          }
+        }
+      });
+    }
+  }
+
+  // ── Gráfico por loja ─────────────────────────────────────────────────────────
+  function setLojaMetric(metric) {
+    lojaMetric = metric;
+    renderLojasChart();
+    ['fat','qtd','ticket'].forEach(m => {
+      const btn = document.getElementById('btnLoja' + m.charAt(0).toUpperCase() + m.slice(1));
+      if (btn) btn.style.borderColor = m === metric ? 'var(--accent)' : '';
+      if (btn) btn.style.color       = m === metric ? 'var(--accent)' : '';
+    });
+  }
+
+  function renderLojasChart() {
+    const section = document.getElementById('lojaCompSection');
+    const ids     = Object.keys(dataByLoja);
+    if (ids.length < 2) { section.style.display = 'none'; return; }
+    section.style.display = 'block';
+
+    const evento = document.getElementById('filterEvento').value;
+
+    const entries = ids.map(id => {
+      const loja = lojas.find(l => l.id === id);
+      let items  = dataByLoja[id].filter(x => !x.isRefunded);
+      if (evento) items = items.filter(x => x.eventName === evento);
+      const kpi  = calcKPIs(items);
+      return {
+        name:  loja?.name || id,
+        value: lojaMetric === 'fat'    ? kpi.faturamento / 100 :
+               lojaMetric === 'qtd'    ? kpi.quantidade :
+                                         kpi.ticket / 100
+      };
+    }).sort((a, b) => b.value - a.value);
+
+    const labels = {
+      fat:    v => 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
+      qtd:    v => v.toLocaleString('pt-BR'),
+      ticket: v => 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })
+    };
+
+    destroyChart('chartPorLoja');
+    charts['chartPorLoja'] = new Chart(document.getElementById('chartPorLoja'), {
+      type: 'bar',
+      data: {
+        labels: entries.map(e => e.name),
+        datasets: [{
+          data: entries.map(e => e.value),
+          backgroundColor: PALETTE,
+          borderRadius: 6
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            grid: { color: '#2e3144' },
+            ticks: { color: '#9aa0b8', callback: v => labels[lojaMetric](v) }
+          },
+          y: {
+            grid: { display: false },
+            ticks: { color: '#9aa0b8', font: { size: 12 } }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: { label: ctx => ' ' + labels[lojaMetric](ctx.raw) }
+          }
+        }
+      }
+    });
+  }
+
+  // ── Comparativo ──────────────────────────────────────────────────────────────
+  function renderComparativo(data, dataAnt) {
+    const section = document.getElementById('comparativoSection');
+    if (!dataAnt.length) { section.style.display = 'none'; return; }
+    section.style.display = 'block';
+
+    const curr = calcKPIs(data);
+    const prev = calcKPIs(dataAnt);
+    const dtinicio = document.getElementById('dtinicio').value;
+    const dtfim    = document.getElementById('dtfim').value;
+    const prevP    = getPreviousPeriod(dtinicio, dtfim);
+
+    document.getElementById('compPeriodoAtual').textContent    = `${formatDate(dtinicio)} – ${formatDate(dtfim)}`;
+    document.getElementById('compPeriodoAnterior').textContent = `${formatDate(prevP.start)} – ${formatDate(prevP.end)}`;
+
+    setCompItem('compFaturamento', curr.faturamento, prev.faturamento, fmt);
+    setCompItem('compQuantidade',  curr.quantidade,  prev.quantidade,  fmtNum);
+    setCompItem('compLitros',      curr.litros,      prev.litros,      fmtL);
+    setCompItem('compProdutos',    curr.produtos,    prev.produtos,    fmtNum);
+  }
+
+  function setCompItem(id, cur, ant, formatter) {
+    const el  = document.getElementById(id);
+    const pct = ant ? ((cur - ant) / ant * 100).toFixed(1) : null;
+    const up  = cur >= ant;
+    el.innerHTML = `
+      <div class="comp-values">
+        <div class="comp-val">
+          <div class="comp-val-tag">Atual</div>
+          <div class="comp-val-num atual">${formatter(cur)}</div>
+        </div>
+        <div class="comp-val">
+          <div class="comp-val-tag">Anterior</div>
+          <div class="comp-val-num anterior">${formatter(ant)}</div>
+        </div>
+      </div>
+      ${pct !== null ? `<div class="comp-delta ${up ? 'up' : 'down'}">${up ? '▲' : '▼'} ${Math.abs(pct)}%</div>` : ''}
+    `;
+  }
+
+  // ── Table ────────────────────────────────────────────────────────────────────
+  function getTableRows(data) {
+    const search = searchTerm.toLowerCase();
+    const agg = {};
+    for (const x of data) {
+      if (search && !(
+        (x.productName     || '').toLowerCase().includes(search) ||
+        (x.productCategory || '').toLowerCase().includes(search) ||
+        (x.barName         || '').toLowerCase().includes(search) ||
+        (x.eventName       || '').toLowerCase().includes(search)
+      )) continue;
+
+      const key = `${x.productName}||${x.barName || ''}||${x.eventName || ''}`;
+      if (!agg[key]) agg[key] = {
+        productName: x.productName, productCategory: x.productCategory,
+        barName: x.barName, eventName: x.eventName,
+        count: 0, value: 0, litros: 0, refunds: 0
+      };
+      if (x.isRefunded) {
+        agg[key].refunds += x.count;
+      } else {
+        agg[key].count  += x.count;
+        agg[key].value  += x.unitValue * x.count - (x.discountValue || 0);
+        if (x.fractionalAmount && x.fractionUnit === 'L') agg[key].litros += x.fractionalAmount;
+      }
+    }
+    return Object.values(agg);
+  }
+
+  function renderTable(data) {
+    let rows = getTableRows(data);
+    rows.sort((a, b) => {
+      const va = a[sortCol] ?? '', vb = b[sortCol] ?? '';
+      return typeof va === 'number' ? (va - vb) * sortDir : String(va).localeCompare(String(vb)) * sortDir;
+    });
+
+    document.getElementById('tableCount').textContent = `${rows.length} produto${rows.length !== 1 ? 's' : ''}`;
+
+    const tbody = document.getElementById('tbody');
+    if (!rows.length) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#9aa0b8;padding:32px">Nenhum resultado</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td>${r.productName || '-'}</td>
+        <td>${r.productCategory || '-'}</td>
+        <td>${r.barName || '-'}</td>
+        <td>${r.eventName || '-'}</td>
+        <td style="text-align:right;font-variant-numeric:tabular-nums">${fmtNum(r.count)}</td>
+        <td style="text-align:right;font-variant-numeric:tabular-nums">${r.litros > 0 ? fmtL(r.litros) : '-'}</td>
+        <td style="text-align:right;font-variant-numeric:tabular-nums">${fmt(r.value)}</td>
+        <td style="text-align:right">${r.refunds > 0 ? `<span class="badge badge-refund">${r.refunds}</span>` : '-'}</td>
+      </tr>
+    `).join('');
+  }
+
+  function sortTable(col) {
+    if (sortCol === col) sortDir *= -1;
+    else { sortCol = col; sortDir = -1; }
+    document.querySelectorAll('th[data-sort]').forEach(th =>
+      th.classList.toggle('sorted', th.dataset.sort === col)
+    );
+    renderTable(getFiltered(allData));
+  }
+
+  // ── Export CSV ───────────────────────────────────────────────────────────────
+  function exportCSV() {
+    if (!allData.length) { alert('Nenhum dado para exportar.'); return; }
+    const rows = getTableRows(getFiltered(allData));
+    rows.sort((a, b) => b.value - a.value);
+
+    const header = 'Produto,Categoria,Bar,Evento,Qtd,Litros,Valor (R$),Estornos\n';
+    const body   = rows.map(r => [
+      `"${(r.productName     || '').replace(/"/g, '""')}"`,
+      `"${(r.productCategory || '').replace(/"/g, '""')}"`,
+      `"${(r.barName         || '').replace(/"/g, '""')}"`,
+      `"${(r.eventName       || '').replace(/"/g, '""')}"`,
+      r.count,
+      r.litros > 0 ? r.litros.toFixed(2).replace('.', ',') : '',
+      (r.value / 100).toFixed(2).replace('.', ','),
+      r.refunds || ''
+    ].join(',')).join('\n');
+
+    const blob = new Blob(['﻿' + header + body], { type: 'text/csv;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `onzecopos_${document.getElementById('dtinicio').value}_${document.getElementById('dtfim').value}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ── UI helpers ───────────────────────────────────────────────────────────────
+  function showLoading(show, text = '') {
+    document.getElementById('loading').classList.toggle('active', show);
+    if (text) document.getElementById('loadingText').textContent = text;
+  }
+
+  function setStatus(state, text) {
+    document.getElementById('statusDot').className = 'status-dot ' + state;
+    document.getElementById('statusMsg').textContent = text;
+  }
+
+  // ── Event listeners ──────────────────────────────────────────────────────────
+  document.getElementById('btnCarregar')?.addEventListener('click', loadData);
+  document.getElementById('btnExportCSV')?.addEventListener('click', exportCSV);
+  document.getElementById('filterEvento')?.addEventListener('change', renderAll);
+  document.getElementById('toggleComparativo')?.addEventListener('change', function () {
+    if (allData.length) loadData();
+  });
+  document.getElementById('searchInput')?.addEventListener('input', function () {
+    searchTerm = this.value;
+    renderTable(getFiltered(allData));
+  });
+  document.querySelectorAll('th[data-sort]').forEach(th =>
+    th.addEventListener('click', () => sortTable(th.dataset.sort))
+  );
+
+  // ── Chopes ───────────────────────────────────────────────────────────────────
+  const CHOPE_SIZES = [
+    { suffix: ' REGUA',  label: 'REGUA',  ml: 190,  liters: 0.190 },
+    { suffix: ' 1L',     label: '1L',     ml: 1000, liters: 1.000 },
+    { suffix: ' G',      label: 'G',      ml: 450,  liters: 0.450 },
+    { suffix: ' P',      label: 'P',      ml: 300,  liters: 0.300 },
+  ];
+
+  // Aliases: produtos com nomes especiais que não seguem o padrão de sufixo
+  // match: nome exato do produto (case-insensitive)
+  // parent: nome do produto pai para agrupamento
+  const CHOPE_ALIASES = [
+    // BREWTECO PILSENZINHA
+    { match: 'HH BREWTECO PILSENZINHA',               parent: 'BREWTECO PILSENZINHA', size: 'P', ml: 300, liters: 0.300 },
+    { match: 'BREWTECO PILSENZINHA G ANIVERSARIO',    parent: 'BREWTECO PILSENZINHA', size: 'G', ml: 450, liters: 0.450 },
+    { match: 'BREWTECO PILSENZINHA P CORTESIA FALAE', parent: 'BREWTECO PILSENZINHA', size: 'P', ml: 300, liters: 0.300 },
+    // ESTRELLA GALICIA
+    { match: 'BV ESTRELLA P',                         parent: 'ESTRELLA GALICIA',     size: 'P', ml: 300, liters: 0.300 },
+    { match: 'BV ESTRELLA G',                         parent: 'ESTRELLA GALICIA',     size: 'G', ml: 450, liters: 0.450 },
+    { match: 'ESTRELLA ANIVERSARIO G',                parent: 'ESTRELLA GALICIA',     size: 'G', ml: 450, liters: 0.450 },
+    // 1906 LA MILNUEVE
+    { match: 'BV 1906 LA MILNUEVE P',                 parent: '1906 LA MILNUEVE',     size: 'P', ml: 300, liters: 0.300 },
+    { match: 'BV 1906 LA MILNUEVE G',                 parent: '1906 LA MILNUEVE',     size: 'G', ml: 450, liters: 0.450 },
+  ];
+
+  function parseChopeName(name) {
+    const upper = (name || '').toUpperCase().trim();
+
+    // 1) Verifica aliases personalizados primeiro
+    for (const a of CHOPE_ALIASES) {
+      if (upper === a.match.toUpperCase()) {
+        return { parent: a.parent, size: a.size, liters: a.liters, ml: a.ml };
+      }
+    }
+
+    // 2) Padrão por sufixo
+    for (const s of CHOPE_SIZES) {
+      if (upper.endsWith(s.suffix)) {
+        return {
+          parent: name.slice(0, -s.suffix.length).trim(),
+          size:   s.label,
+          liters: s.liters,
+          ml:     s.ml
+        };
+      }
+    }
+    return null;
+  }
+
+  let chopeData      = {};   // { parentName: { REGUA:{qty,val,litros}, P:{...}, G:{...}, '1L':{...} } }
+  let chopeSelected  = null;
+  let chopeDetailMetric = 'litros';
+  let chopeRawItems  = {};   // { parentName: [ ...raw items ] }
+  let chopeDataByLoja = {}; // { parentName: { lojaName: { qty, litros, fat } } }
+
+  // ── Store picker da aba Chopes ───────────────────────────────────────────────
+  let chopeAllData = [];  // dados próprios da aba Chopes
+
+  function initChopePicker() {
+    const container = document.getElementById('chopeStoreCheckboxes');
+    container.innerHTML = lojas.map(l => `
+      <div class="store-option">
+        <input type="checkbox" id="chopeL_${l.id}" value="${l.id}" checked onchange="updateChopeStoreSummary()">
+        <label for="chopeL_${l.id}" style="cursor:pointer">${l.name}</label>
+      </div>`).join('');
+    document.getElementById('chopeCheckAll').checked = true;
+    updateChopeStoreSummary();
+  }
+
+  function toggleChopeStorePicker() {
+    document.getElementById('chopeStoreTrigger').classList.toggle('open');
+    document.getElementById('chopeStoreDropdown').classList.toggle('open');
+  }
+
+  function toggleChopeAll(checked) {
+    lojas.forEach(l => { document.getElementById('chopeL_' + l.id).checked = checked; });
+    updateChopeStoreSummary();
+  }
+
+  function updateChopeStoreSummary() {
+    const checked = getChopeCheckedLojas();
+    const all = checked.length === lojas.length;
+    document.getElementById('chopeCheckAll').checked = all;
+    document.getElementById('chopeStoreSummary').textContent =
+      all ? `Todas (${lojas.length})` :
+      checked.length === 0 ? 'Nenhuma' :
+      checked.length === 1 ? lojas.find(l => l.id === checked[0])?.name :
+      `${checked.length} lojas`;
+  }
+
+  function getChopeCheckedLojas() {
+    return lojas.filter(l => document.getElementById('chopeL_' + l.id)?.checked).map(l => l.id);
+  }
+
+  document.addEventListener('click', e => {
+    const picker = document.getElementById('chopeStorePicker');
+    if (picker && !picker.contains(e.target)) {
+      document.getElementById('chopeStoreTrigger')?.classList.remove('open');
+      document.getElementById('chopeStoreDropdown')?.classList.remove('open');
+    }
+  });
+
+  // ── Prod Store Picker ────────────────────────────────────────────────────────
+  function initProdPicker() {
+    const container = document.getElementById('prodStoreCheckboxes');
+    container.innerHTML = lojas.map(l => `
+      <div class="store-option">
+        <input type="checkbox" id="prodL_${l.id}" value="${l.id}" checked onchange="updateProdStoreSummary()">
+        <label for="prodL_${l.id}" style="cursor:pointer">${l.name}</label>
+      </div>`).join('');
+    document.getElementById('prodCheckAll').checked = true;
+    updateProdStoreSummary();
+  }
+
+  function toggleProdStorePicker() {
+    document.getElementById('prodStoreTrigger').classList.toggle('open');
+    document.getElementById('prodStoreDropdown').classList.toggle('open');
+  }
+
+  function toggleProdAll(checked) {
+    lojas.forEach(l => { document.getElementById('prodL_' + l.id).checked = checked; });
+    updateProdStoreSummary();
+  }
+
+  function updateProdStoreSummary() {
+    const checked = getProdCheckedLojas();
+    const all = checked.length === lojas.length;
+    document.getElementById('prodCheckAll').checked = all;
+    document.getElementById('prodStoreSummary').textContent =
+      all ? `Todas (${lojas.length})` :
+      checked.length === 0 ? 'Nenhuma' :
+      checked.length === 1 ? lojas.find(l => l.id === checked[0])?.name :
+      `${checked.length} lojas`;
+  }
+
+  function getProdCheckedLojas() {
+    return lojas.filter(l => document.getElementById('prodL_' + l.id)?.checked).map(l => l.id);
+  }
+
+  document.addEventListener('click', e => {
+    const picker = document.getElementById('prodStorePicker');
+    if (picker && !picker.contains(e.target)) {
+      document.getElementById('prodStoreTrigger')?.classList.remove('open');
+      document.getElementById('prodStoreDropdown')?.classList.remove('open');
+    }
+  });
+
+  async function buscarChopes() {
+    const dtinicio   = document.getElementById('chopeDtinicio').value;
+    const dtfim      = document.getElementById('chopeDtfim').value;
+    const checkedIds = getChopeCheckedLojas();
+
+    if (!dtinicio || !dtfim) { alert('Selecione o período.'); return; }
+    if (!checkedIds.length)  { alert('Selecione ao menos uma loja.'); return; }
+
+    document.getElementById('chopeStatus').textContent = 'Buscando...';
+    showLoading(true, 'Buscando chopes...');
+
+    try {
+      const targetLojas = lojas.filter(l => checkedIds.includes(l.id));
+      const results = await Promise.all(
+        targetLojas.map(l => fetchSaida(l.id, dtinicio, dtfim)
+          .then(items => items.map(item => ({ ...item, _lojaName: l.name, _lojaId: l.id })))
+          .catch(() => []))
+      );
+      chopeAllData = results.flat().filter(Boolean);
+      buildChopeData(chopeAllData);
+      renderChopesKPIsAndTable();
+      document.getElementById('chopeStatus').textContent =
+        `${chopeAllData.length} registros — ${formatDate(dtinicio)} a ${formatDate(dtfim)}`;
+    } catch(e) {
+      document.getElementById('chopeStatus').textContent = 'Erro: ' + e.message;
+    } finally {
+      showLoading(false);
+    }
+  }
+
+  function debugChopes() {
+    const src = chopeAllData.length ? chopeAllData : allData;
+    const categorias = [...new Set(src.map(d => d.productCategory))].sort();
+    const chopeItems = src.filter(d => !d.isRefunded && (d.productCategory || '').toUpperCase().includes('CHOP'));
+    const sample     = chopeItems.slice(0, 3).map(d => ({
+      productName:     d.productName,
+      productCategory: d.productCategory,
+      unitValue:       d.unitValue,
+      count:           d.count,
+      additions:       d.additions
+    }));
+    const nomesUnicos = [...new Set(chopeItems.map(d => d.productName))].sort().slice(0, 40);
+    // Mostra lojaIds únicos para debug de correspondência
+    const lojaIdsUnicos = [...new Set(src.map(d => d.lojaId).filter(Boolean))].slice(0, 20);
+    const txt =
+      `=== TOTAL REGISTROS: ${src.length} ===\n\n` +
+      `=== LOJA IDs NA API (primeiros 20) ===\n` +
+      lojaIdsUnicos.join('\n') +
+      `\n\n=== LOJAS_FIXAS IDs ===\n` +
+      lojas.map(l => `${l.id} → ${l.name}`).join('\n') +
+      `\n\n=== CATEGORIAS (${categorias.length}) ===\n` +
+      categorias.join('\n') +
+      `\n\n=== NOMES ÚNICOS CHOPE (primeiros 40) ===\n` +
+      nomesUnicos.join('\n') +
+      `\n\n=== AMOSTRA 3 ITENS ===\n` +
+      JSON.stringify(sample, null, 2);
+    document.getElementById('chopeDebugBox').style.display = 'block';
+    document.getElementById('chopeDebugOut').value = txt;
+  }
+
+  function buildChopeData(data) {
+    chopeData      = {};
+    chopeRawItems  = {};
+    chopeDataByLoja = {};
+    const filtered = data.filter(d => !d.isRefunded);
+    for (const d of filtered) {
+      // Tenta encontrar o tamanho no productName
+      let parsed = parseChopeName(d.productName);
+      let liters = parsed?.liters ?? 0;
+
+      // Se não achou no nome, procura nas additions (isModification)
+      if (!parsed && d.additions && d.additions.length > 0) {
+        for (const add of d.additions) {
+          const ap = parseChopeName(add.name);
+          if (ap) { parsed = { ...ap, parent: d.productName.trim() }; liters = ap.liters; break; }
+        }
+      }
+
+      // Inclui também produtos de categoria CHOPE sem tamanho identificado (liters=0)
+      if (!parsed && d.productCategory === 'CHOPE') {
+        parsed = { parent: d.productName.trim(), size: '?', liters: 0 };
+      }
+
+      if (!parsed) continue;
+      const { parent, size } = parsed;
+      // liters já foi definido acima (do parsed original ou da addition)
+      if (!chopeData[parent]) {
+        chopeData[parent]     = { REGUA: null, P: null, G: null, '1L': null, _fat: 0, _qty: 0, _litros: 0 };
+        chopeRawItems[parent] = [];
+      }
+      if (!chopeData[parent][size]) chopeData[parent][size] = { qty: 0, val: 0, litros: 0 };
+      chopeData[parent][size].qty    += d.count;
+      chopeData[parent][size].val    += d.unitValue * d.count - (d.discountValue || 0);
+      chopeData[parent][size].litros += liters * d.count;
+      chopeData[parent]._fat    += d.unitValue * d.count - (d.discountValue || 0);
+      chopeData[parent]._qty    += d.count;
+      chopeData[parent]._litros += liters * d.count;
+      chopeRawItems[parent].push({ ...d, _liters: liters });
+
+      // ── Breakdown por loja ─────────────────────────────────────────
+      // Tenta combinar por id completo, parcial ou nome
+      const lojaObj  = lojas.find(l =>
+        l.id === d.lojaId ||
+        l.id === d.redeId ||
+        (d.lojaId && l.id.includes(d.lojaId)) ||
+        (d.lojaId && d.lojaId.includes(l.id))
+      );
+      const lojaNome = lojaObj ? lojaObj.name : (d.lojaId ? '🔎 ID:' + d.lojaId : 'Desconhecida');
+      if (!chopeDataByLoja[parent]) chopeDataByLoja[parent] = {};
+      if (!chopeDataByLoja[parent][lojaNome]) chopeDataByLoja[parent][lojaNome] = { qty: 0, litros: 0, fat: 0 };
+      chopeDataByLoja[parent][lojaNome].qty    += d.count;
+      chopeDataByLoja[parent][lojaNome].litros += liters * d.count;
+      chopeDataByLoja[parent][lojaNome].fat    += d.unitValue * d.count - (d.discountValue || 0);
+    }
+  }
+
+  // Remove acentos para busca
+  function sem(str) {
+    return (str || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  }
+
+  function renderChopes() {
+    if (!chopeAllData.length) return;
+    buildChopeData(chopeAllData);
+    renderChopesKPIsAndTable();
+  }
+
+  function renderChopesKPIs() { renderChopesKPIsAndTable(); }
+
+  function getActiveSizes() {
+    return ['REGUA','P','G','1L'].filter(s => {
+      const el = document.querySelector(`#tog-${s} input`);
+      return el ? el.checked : true;
+    });
+  }
+
+  function renderChopesKPIsAndTable() {
+    const rawSearch   = document.getElementById('chopeSearch').value || '';
+    const activeSizes = getActiveSizes();
+
+    // Filtros: tags fixadas + texto livre do campo
+    const activeTags = (typeof chopeTags !== 'undefined' && chopeTags.length > 0) ? chopeTags : [];
+    const liveSearch = sem(rawSearch);
+
+    function matchesChope(name) {
+      const n = sem(name);
+      if (activeTags.length > 0) return activeTags.some(t => n.includes(t));
+      if (liveSearch)            return n.includes(liveSearch);
+      return true;
+    }
+
+    // Recalcula totais considerando apenas os tamanhos ativos
+    const entries = Object.entries(chopeData)
+      .map(([name, v]) => {
+        const filtL = activeSizes.reduce((s, sz) => s + (v[sz]?.litros || 0), 0) + (v['?']?.litros || 0);
+        const filtQ = activeSizes.reduce((s, sz) => s + (v[sz]?.qty   || 0), 0) + (v['?']?.qty   || 0);
+        const filtF = activeSizes.reduce((s, sz) => s + (v[sz]?.val   || 0), 0) + (v['?']?.val   || 0);
+        return [name, { ...v, _litrosF: filtL, _qtyF: filtQ, _fatF: filtF }];
+      })
+      .filter(([name, v]) => matchesChope(name) && v._qtyF > 0)
+      .sort((a, b) => b[1]._litrosF - a[1]._litrosF);
+
+    // KPIs — refletem a busca e os tamanhos ativos
+    const totalL = entries.reduce((s, [,v]) => s + v._litrosF, 0);
+    const totalQ = entries.reduce((s, [,v]) => s + v._qtyF, 0);
+    const totalF = entries.reduce((s, [,v]) => s + v._fatF, 0);
+    document.getElementById('chopeKpiLitros').textContent   = fmtL(totalL);
+    document.getElementById('chopeKpiTipos').textContent    = fmtNum(entries.length);
+    document.getElementById('chopeKpiUnidades').textContent = fmtNum(totalQ);
+    document.getElementById('chopeKpiFat').textContent      = fmt(totalF);
+    document.getElementById('chopeStatus').textContent      = `${entries.length} chope(s) encontrado(s)`;
+    document.getElementById('chopeTableCount').textContent  = entries.length + ' tipo(s)';
+
+    const tbody = document.getElementById('chopeTbody');
+    if (!entries.length) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#9aa0b8;padding:32px">Nenhum chope encontrado</td></tr>`;
+      return;
+    }
+
+    // Atualiza cabeçalhos (mostra só tamanhos ativos)
+    const allSizes = ['REGUA','P','G','1L'];
+    const sizeLabels = { REGUA:'190ml', P:'300ml', G:'450ml', '1L':'1000ml' };
+    const thead = document.querySelector('#chopeTable thead tr');
+    thead.innerHTML = `<th>Chope</th>` +
+      allSizes.map(s => activeSizes.includes(s)
+        ? `<th style="text-align:right">${s}<br><span style="font-weight:400;color:var(--text2)">${sizeLabels[s]}</span></th>`
+        : '').join('') +
+      `<th style="text-align:right">Total Litros</th>
+       <th style="text-align:right">Unidades</th>
+       <th style="text-align:right">Faturamento</th>`;
+
+    tbody.innerHTML = entries.map(([name, v]) => {
+      const sizeCols = allSizes.filter(s => activeSizes.includes(s)).map(size => {
+        const s = v[size];
+        if (!s) return `<td class="size-cell">—</td>`;
+        return `<td class="size-cell">
+          <div class="qty">${fmtNum(s.qty)} un</div>
+          <div class="ltr">${fmtL(s.litros)}</div>
+        </td>`;
+      }).join('');
+      const isSelected = name === chopeSelected;
+      return `<tr onclick="selecionarChope('${name.replace(/'/g,"\\'")}')\" ${isSelected ? 'class="chope-selected"' : ''}>
+        <td style="font-weight:600">${name}</td>
+        ${sizeCols}
+        <td style="text-align:right;font-weight:700;color:var(--warning)">${fmtL(v._litrosF)}</td>
+        <td style="text-align:right">${fmtNum(v._qtyF)}</td>
+        <td style="text-align:right">${fmt(v._fatF)}</td>
+      </tr>`;
+    }).join('');
+
+    if (chopeSelected && chopeData[chopeSelected]) {
+      document.querySelectorAll('#chopeTbody tr').forEach(tr => {
+        tr.classList.toggle('chope-selected', tr.cells[0]?.textContent.trim() === chopeSelected);
+      });
+    }
+  }
+
+  function renderChopesTable() {
+    renderChopesKPIsAndTable();
+  }
+
+  function selecionarChope(nome) {
+    chopeSelected = nome;
+    document.querySelectorAll('#chopeTbody tr').forEach(tr => {
+      tr.classList.toggle('chope-selected', tr.cells[0]?.textContent.trim() === nome);
+    });
+    document.getElementById('chopeDetail').style.display = 'block';
+    document.getElementById('chopeDetailTitle').textContent = '🍺 ' + nome;
+    renderChopeDetailCharts();
+  }
+
+  function setChopeDetailMetric(m) {
+    chopeDetailMetric = m;
+    ['litros','qtd','fat'].forEach(x => {
+      const id  = 'btnChope' + x.charAt(0).toUpperCase() + x.slice(1);
+      const btn = document.getElementById(id);
+      if (btn) { btn.style.borderColor = x === m ? 'var(--accent)' : ''; btn.style.color = x === m ? 'var(--accent)' : ''; }
+    });
+    renderChopeDetailCharts();
+  }
+
+  function renderChopeLojaBreakdown() {
+    const el = document.getElementById('chopeLojaBreakdown');
+    if (!el || !chopeSelected) return;
+    const byLoja = chopeDataByLoja[chopeSelected] || {};
+    const entries = Object.entries(byLoja).sort((a, b) => b[1].litros - a[1].litros);
+    if (!entries.length) {
+      el.innerHTML = '<p style="color:var(--text2);font-size:12px">Sem dados por loja.</p>';
+      return;
+    }
+    const totalLitros = entries.reduce((s, [, v]) => s + v.litros, 0);
+    const totalQty    = entries.reduce((s, [, v]) => s + v.qty,    0);
+    const totalFat    = entries.reduce((s, [, v]) => s + v.fat,    0);
+
+    el.innerHTML = `
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead>
+            <tr>
+              <th style="text-align:left;padding:8px 12px;background:var(--surface2);color:var(--text2);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;border-radius:6px 0 0 6px">Loja</th>
+              <th style="text-align:right;padding:8px 12px;background:var(--surface2);color:var(--text2);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em">Unidades</th>
+              <th style="text-align:right;padding:8px 12px;background:var(--surface2);color:var(--text2);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em">Litros</th>
+              <th style="text-align:right;padding:8px 12px;background:var(--surface2);color:var(--text2);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em">% Litros</th>
+              <th style="text-align:right;padding:8px 12px;background:var(--surface2);color:var(--text2);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;border-radius:0 6px 6px 0">Faturamento</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${entries.map(([nome, v]) => {
+              const pct = totalLitros > 0 ? (v.litros / totalLitros * 100) : 0;
+              return `<tr>
+                <td style="padding:8px 12px;border-bottom:1px solid var(--border);font-weight:600">${nome}</td>
+                <td style="padding:8px 12px;border-bottom:1px solid var(--border);text-align:right;font-variant-numeric:tabular-nums">${fmtNum(v.qty)}</td>
+                <td style="padding:8px 12px;border-bottom:1px solid var(--border);text-align:right;font-variant-numeric:tabular-nums;color:var(--warning);font-weight:700">${fmtL(v.litros)}</td>
+                <td style="padding:8px 12px;border-bottom:1px solid var(--border);text-align:right">
+                  <div style="display:flex;align-items:center;justify-content:flex-end;gap:8px">
+                    <div style="width:70px;height:5px;background:var(--border);border-radius:3px;overflow:hidden">
+                      <div style="height:100%;width:${pct.toFixed(1)}%;background:var(--accent);border-radius:3px"></div>
+                    </div>
+                    <span style="color:var(--text2);font-size:11px;min-width:36px;text-align:right">${pct.toFixed(1)}%</span>
+                  </div>
+                </td>
+                <td style="padding:8px 12px;border-bottom:1px solid var(--border);text-align:right;font-variant-numeric:tabular-nums">${fmt(v.fat)}</td>
+              </tr>`;
+            }).join('')}
+            <tr style="background:var(--surface2)">
+              <td style="padding:8px 12px;font-weight:700;border-radius:0 0 0 6px">TOTAL</td>
+              <td style="padding:8px 12px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums">${fmtNum(totalQty)}</td>
+              <td style="padding:8px 12px;text-align:right;font-weight:700;color:var(--warning);font-variant-numeric:tabular-nums">${fmtL(totalLitros)}</td>
+              <td style="padding:8px 12px;text-align:right;color:var(--text2)">100%</td>
+              <td style="padding:8px 12px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;border-radius:0 0 6px 0">${fmt(totalFat)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>`;
+  }
+
+  function renderChopeDetailCharts() {
+    if (!chopeSelected) return;
+    const items = chopeRawItems[chopeSelected] || [];
+
+    // Por horário
+    const byHour = Array(24).fill(0).map(() => ({ litros: 0, qtd: 0, fat: 0 }));
+    for (const d of items) {
+      const h = d.transactionDate ? new Date(d.transactionDate).getHours() : 0;
+      byHour[h].litros += d._liters * d.count;
+      byHour[h].qtd    += d.count;
+      byHour[h].fat    += d.unitValue * d.count - (d.discountValue || 0);
+    }
+    const hoursWithData = byHour.map((v, h) => ({ h, ...v })).filter(v => v.qtd > 0);
+    const hLabels = hoursWithData.map(v => v.h + 'h');
+    const hData   = hoursWithData.map(v => chopeDetailMetric === 'litros' ? +v.litros.toFixed(3) : chopeDetailMetric === 'qtd' ? v.qtd : v.fat / 100);
+
+    destroyChart('chartChopeHorario');
+    charts['chartChopeHorario'] = new Chart(document.getElementById('chartChopeHorario'), {
+      type: 'bar',
+      data: {
+        labels: hLabels,
+        datasets: [{
+          data: hData,
+          backgroundColor: 'rgba(124,106,255,.7)',
+          borderColor: '#7c6aff',
+          borderWidth: 1,
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: {
+          x: { grid: { color: '#2e3144' }, ticks: { color: '#9aa0b8' } },
+          y: {
+            grid: { color: '#2e3144' },
+            ticks: {
+              color: '#9aa0b8',
+              callback: v => chopeDetailMetric === 'litros' ? v.toFixed(1)+'L' :
+                             chopeDetailMetric === 'fat' ? 'R$'+v.toLocaleString('pt-BR') :
+                             v
+            }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => chopeDetailMetric === 'litros' ? ` ${ctx.raw.toFixed(2)} L` :
+                            chopeDetailMetric === 'fat'    ? ` R$ ${ctx.raw.toLocaleString('pt-BR',{minimumFractionDigits:2})}` :
+                            ` ${ctx.raw} un`
+            }
+          }
+        }
+      }
+    });
+
+    // Por tamanho — só tamanhos ativos
+    const activeSzs = getActiveSizes();
+    const sizes = CHOPE_SIZES.map(s => s.label).filter(s => activeSzs.includes(s));
+    const sData = sizes.map(sz => {
+      const s = chopeData[chopeSelected]?.[sz];
+      if (!s) return 0;
+      return chopeDetailMetric === 'litros' ? +s.litros.toFixed(3) :
+             chopeDetailMetric === 'fat'    ? s.val / 100 : s.qty;
+    });
+    const hasData = sData.some(v => v > 0);
+
+    destroyChart('chartChopeTamanho');
+    if (hasData) {
+      charts['chartChopeTamanho'] = new Chart(document.getElementById('chartChopeTamanho'), {
+        type: 'doughnut',
+        data: {
+          labels: sizes.map((s, i) => `${s} (${CHOPE_SIZES.find(x=>x.label===s)?.ml}ml)`),
+          datasets: [{ data: sData, backgroundColor: PALETTE, borderWidth: 0, hoverOffset: 6 }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'right', labels: { color: '#9aa0b8', font: { size: 11 }, boxWidth: 11, padding: 10 } },
+            tooltip: {
+              callbacks: {
+                label: ctx => chopeDetailMetric === 'litros' ? ` ${ctx.raw.toFixed(2)} L` :
+                              chopeDetailMetric === 'fat'    ? ` R$ ${ctx.raw.toLocaleString('pt-BR',{minimumFractionDigits:2})}` :
+                              ` ${ctx.raw} un`
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Por loja / unidade
+    renderChopeLojaBreakdown();
+  }
+
+  // ── Tabs ─────────────────────────────────────────────────────────────────────
+  function switchTab(name) {
+    document.querySelectorAll('.tab-screen').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('screen-' + name).classList.add('active');
+    document.querySelector(`.tab-btn[onclick="switchTab('${name}')"]`).classList.add('active');
+    if (name === 'chopes' && allData.length) renderChopes();
+  }
+
+  // ── Busca de produtos ────────────────────────────────────────────────────────
+  let prodData       = [];
+  let prodDataAll    = [];   // todos os produtos do período (sem filtro de nome)
+  let prodMetric     = 'fat';
+  let prodSelecionado = null;
+
+  async function buscarProdutos() {
+    // Usa as tags se existirem, senão usa o campo texto
+    const tagsAtivas = (typeof prodTags !== 'undefined' && prodTags.length > 0)
+      ? prodTags
+      : [document.getElementById('produtoSearch').value.trim().toLowerCase()].filter(Boolean);
+
+    const dtinicio = document.getElementById('prodDtinicio').value;
+    const dtfim    = document.getElementById('prodDtfim').value;
+    const checkedIds = getProdCheckedLojas();
+
+    if (!dtinicio || !dtfim) { alert('Selecione o período.'); return; }
+    if (checkedIds.length === 0) { alert('Selecione ao menos uma loja.'); return; }
+
+    // Guarda a query principal para uso no restante da função
+    const query = tagsAtivas[0] || '';
+
+    setProdStatus('loading', 'Buscando...');
+    showLoading(true, 'Buscando produtos...');
+
+    try {
+      const targetLojas = lojas.filter(l => checkedIds.includes(l.id));
+      const results = await Promise.all(
+        targetLojas.map(l => fetchSaida(l.id, dtinicio, dtfim)
+          .then(items => items.map(item => ({ ...item, _lojaName: l.name, _lojaId: l.id })))
+          .catch(() => []))
+      );
+
+      // Guarda dados por loja para o gráfico de detalhe
+      prodDataByLoja = {};
+      results.forEach((items, i) => {
+        prodDataByLoja[targetLojas[i].id] = (items || []).filter(Boolean);
+      });
+
+      // Guarda TODOS os itens do período (sem filtro de nome/grupo) para calcular % totais
+      prodDataAll = results.flat().filter(Boolean).filter(d => !d.isRefunded);
+
+      const grupoFiltro = (document.getElementById('prodGrupoFilter')?.value || '').toUpperCase();
+      let all = prodDataAll.filter(d => {
+        const nome = (d.productName || '').toLowerCase();
+        // Se há múltiplas tags, aceita qualquer uma delas
+        if (tagsAtivas.length > 1) {
+          if (!tagsAtivas.some(t => nome.includes(t))) return false;
+        } else if (query && !nome.includes(query)) {
+          return false;
+        }
+        if (grupoFiltro && (d.productCategory || '').toUpperCase() !== grupoFiltro) return false;
+        return true;
+      });
+
+      // Popula o select de grupos com categorias reais
+      const selGrupo = document.getElementById('prodGrupoFilter');
+      if (selGrupo) {
+        const curGrupo = selGrupo.value;
+        const grupos = [...new Set(prodDataAll.map(d => d.productCategory).filter(Boolean))].sort();
+        selGrupo.innerHTML = '<option value="">Todos</option>' +
+          grupos.map(g => `<option value="${g}" ${g === curGrupo ? 'selected' : ''}>${g}</option>`).join('');
+      }
+
+      prodData = all;
+      prodSelecionado = null;
+
+      // Passa todas as tags para renderizar resultados agrupados
+      renderProdResultados(tagsAtivas.length > 1 ? tagsAtivas.join('|') : query);
+      setProdStatus('ok', `${all.length} registros — ${grupoFiltro || 'todos os grupos'} | ${formatDate(dtinicio)} a ${formatDate(dtfim)}`);
+
+      // Comparativo multi-produto (se houver mais de 1 tag)
+      if (tagsAtivas.length > 1) {
+        const resultsByTag = tagsAtivas.map(tag => ({
+          tag,
+          items: prodDataAll.filter(d => (d.productName||'').toLowerCase().includes(tag))
+        }));
+        try { renderMultiComp(resultsByTag); } catch(e) { console.error('multiComp:', e); }
+      } else {
+        const sec = document.getElementById('multiCompSection');
+        if (sec) sec.style.display = 'none';
+      }
+    } catch (e) {
+      setProdStatus('error', 'Erro: ' + e.message);
+    } finally {
+      showLoading(false);
+    }
+  }
+
+  let prodDataByLoja = {};
+
+  function renderProdResultados(query) {
+    // ── Totais do período completo (sem filtro de nome) ────────────────────────
+    const totalPeriodo = prodDataAll.reduce((s, d) => s + d.unitValue * d.count - (d.discountValue || 0), 0);
+    const totalPorGrupo = {};
+    prodDataAll.forEach(d => {
+      const cat = d.productCategory || 'Sem categoria';
+      totalPorGrupo[cat] = (totalPorGrupo[cat] || 0) + d.unitValue * d.count - (d.discountValue || 0);
+    });
+
+    // ── KPIs dos resultados filtrados ────────────────────────────────────────
+    const fat    = prodData.reduce((s, d) => s + d.unitValue * d.count - (d.discountValue || 0), 0);
+    const qtd    = prodData.reduce((s, d) => s + d.count, 0);
+    const litros = prodData.reduce((s, d) => s + calcLitros(d), 0);
+    const pctTotal = totalPeriodo > 0 ? (fat / totalPeriodo * 100).toFixed(1) + '%' : '—';
+
+    document.getElementById('prodKpis').style.display = 'grid';
+    document.getElementById('prodKpiFat').textContent    = fmt(fat);
+    document.getElementById('prodKpiQtd').textContent    = fmtNum(qtd);
+    document.getElementById('prodKpiLitros').textContent = litros > 0 ? fmtL(litros) : '—';
+    const pctEl = document.getElementById('prodKpiPctTotal');
+    if (pctEl) pctEl.textContent = `${pctTotal} do faturamento total`;
+    const totalEl = document.getElementById('prodKpiTotalPeriodo');
+    if (totalEl) totalEl.textContent = fmt(totalPeriodo);
+
+    // ── Agrupa por produto ─────────────────────────────────────────────────────
+    const agg = {};
+    for (const d of prodData) {
+      const key = `${d.productName}||${d.barName || ''}||${d.eventName || ''}||${d.productCategory || ''}`;
+      if (!agg[key]) agg[key] = {
+        productName: d.productName, productCategory: d.productCategory,
+        barName: d.barName, eventName: d.eventName,
+        count: 0, value: 0, litros: 0, unitValue: d.unitValue
+      };
+      agg[key].count += d.count;
+      agg[key].value += d.unitValue * d.count - (d.discountValue || 0);
+      agg[key].litros += calcLitros(d);
+    }
+
+    const rows = Object.values(agg).sort((a, b) => b.value - a.value);
+    document.getElementById('prodTableCount').textContent = `${rows.length} linha(s)`;
+    document.getElementById('prodTableSection').style.display = 'block';
+
+    // Atualiza cabeçalho da tabela para incluir colunas de %
+    const prodThead = document.querySelector('#prodTableSection table thead tr');
+    if (prodThead) {
+      prodThead.innerHTML = `
+        <th>Produto</th>
+        <th>Categoria</th>
+        <th>Bar / Loja</th>
+        <th>Evento</th>
+        <th style="text-align:right">Qtd</th>
+        <th style="text-align:right">Litros</th>
+        <th style="text-align:right">Valor unit.</th>
+        <th style="text-align:right">Valor total</th>
+        <th style="text-align:right" title="% do faturamento total do período">% Total</th>
+        <th style="text-align:right" title="% do faturamento dentro da categoria">% Grupo</th>
+      `;
+    }
+
+    const tbody = document.getElementById('prodTbody');
+    if (!rows.length) {
+      tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:#9aa0b8;padding:24px">Nenhum produto encontrado</td></tr>`;
+      document.getElementById('prodChart').style.display = 'none';
+      return;
+    }
+
+    // Agrupa por tag quando há múltiplas
+    const activeTags = (typeof prodTags !== 'undefined' && prodTags.length > 1) ? prodTags : null;
+
+    function rowHtml(r, tagColor) {
+      const pctT = totalPeriodo > 0 ? (r.value / totalPeriodo * 100) : 0;
+      const barW = Math.min(pctT * 3, 100).toFixed(0);
+      const lojaDisplay = r._lojaName || r.barName || '-';
+      return `<tr onclick="selecionarProduto('${(r.productName || '').replace(/'/g, "\\'")}')" style="cursor:pointer">
+        <td style="padding-left:${activeTags?'20px':'10px'}">${r.productName || '-'}</td>
+        <td>${r.productCategory || '-'}</td>
+        <td>${lojaDisplay}</td>
+        <td>${r.eventName || '-'}</td>
+        <td style="text-align:right;font-variant-numeric:tabular-nums">${fmtNum(r.count)}</td>
+        <td style="text-align:right;font-variant-numeric:tabular-nums">${r.litros > 0 ? fmtL(r.litros) : '-'}</td>
+        <td style="text-align:right;font-variant-numeric:tabular-nums">${fmt(r.unitValue)}</td>
+        <td style="text-align:right;font-variant-numeric:tabular-nums;font-weight:600">${fmt(r.value)}</td>
+        <td style="text-align:right" colspan="2">
+          <div style="display:flex;align-items:center;justify-content:flex-end;gap:5px">
+            <div style="width:50px;height:4px;background:var(--border);border-radius:2px;overflow:hidden">
+              <div style="height:100%;width:${barW}%;background:${tagColor||'var(--accent)'};border-radius:2px"></div>
+            </div>
+            <span style="font-size:11px;font-weight:600;color:${tagColor||'var(--accent)'};min-width:38px;text-align:right">${pctT.toFixed(1)}%</span>
+          </div>
+        </td>
+      </tr>`;
+    }
+
+    let html = '';
+    if (activeTags) {
+      // Renderiza agrupado por tag com subtotal
+      activeTags.forEach((tag, ti) => {
+        const color = TAG_COLORS[ti];
+        const tagRows = rows.filter(r => (r.productName||'').toLowerCase().includes(tag));
+        if (!tagRows.length) return;
+        const subtotalFat = tagRows.reduce((s,r) => s+r.value, 0);
+        const subtotalQtd = tagRows.reduce((s,r) => s+r.count, 0);
+        const subtotalL   = tagRows.reduce((s,r) => s+r.litros, 0);
+        html += `<tr class="prod-group-header">
+          <td colspan="10" style="padding:6px 10px;border-left:3px solid ${color}">
+            <span style="color:${color}">▐ ${tag.toUpperCase()}</span>
+            <span style="float:right;font-weight:400;color:var(--text2);font-size:11px">${tagRows.length} linha(s) · ${fmtNum(subtotalQtd)} un · ${fmt(subtotalFat)}${subtotalL>0?' · '+fmtL(subtotalL):''}</span>
+          </td>
+        </tr>`;
+        tagRows.forEach(r => { html += rowHtml(r, color); });
+      });
+    } else {
+      rows.forEach(r => { html += rowHtml(r, null); });
+    }
+    tbody.innerHTML = html;
+    document.getElementById('prodTableCount').textContent = `${rows.length} linha(s)`;
+
+    // Seleciona automaticamente o primeiro produto para o gráfico
+    if (rows.length > 0) selecionarProduto(rows[0].productName);
+  }
+
+  function selecionarProduto(nome) {
+    prodSelecionado = nome;
+
+    // Destaca linha
+    document.querySelectorAll('#prodTbody tr').forEach(tr => {
+      tr.classList.toggle('selected-row', tr.cells[0]?.textContent === nome);
+    });
+
+    document.getElementById('prodChartTitle').textContent = nome + ' — por loja';
+    renderProdDetalheChart();
+  }
+
+  function setProdMetric(m) {
+    prodMetric = m;
+    renderProdDetalheChart();
+    ['fat','qtd','litros'].forEach(x => {
+      const btn = document.getElementById('btnProd' + x.charAt(0).toUpperCase() + x.slice(1));
+      if (btn) { btn.style.borderColor = x === m ? 'var(--accent)' : ''; btn.style.color = x === m ? 'var(--accent)' : ''; }
+    });
+  }
+
+  function renderProdDetalheChart() {
+    if (!prodSelecionado) return;
+    const checkedIds = getCheckedLojas();
+    const targetLojas = lojas.filter(l => checkedIds.includes(l.id));
+
+    const entries = targetLojas.map(l => {
+      const items = (prodDataByLoja[l.id] || [])
+        .filter(d => !d.isRefunded && d.productName === prodSelecionado);
+      const fat    = items.reduce((s, d) => s + d.unitValue * d.count - (d.discountValue || 0), 0);
+      const qtd    = items.reduce((s, d) => s + d.count, 0);
+      const litros = items.filter(d => d.fractionUnit === 'L' && d.fractionalAmount).reduce((s, d) => s + d.fractionalAmount, 0);
+      return {
+        name: l.name,
+        value: prodMetric === 'fat' ? fat / 100 : prodMetric === 'qtd' ? qtd : litros
+      };
+    }).filter(e => e.value > 0).sort((a, b) => b.value - a.value);
+
+    const section = document.getElementById('prodChart');
+    if (!entries.length) { section.style.display = 'none'; return; }
+    section.style.display = 'block';
+
+    const labelFn = {
+      fat:    v => 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
+      qtd:    v => v.toLocaleString('pt-BR'),
+      litros: v => v.toFixed(2) + ' L'
+    };
+
+    destroyChart('chartProdDetalhe');
+    charts['chartProdDetalhe'] = new Chart(document.getElementById('chartProdDetalhe'), {
+      type: 'bar',
+      data: {
+        labels: entries.map(e => e.name),
+        datasets: [{
+          data: entries.map(e => e.value),
+          backgroundColor: PALETTE,
+          borderRadius: 6
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            grid: { color: '#2e3144' },
+            ticks: { color: '#9aa0b8', callback: v => labelFn[prodMetric](v) }
+          },
+          y: { grid: { display: false }, ticks: { color: '#9aa0b8', font: { size: 12 } } }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => ' ' + labelFn[prodMetric](ctx.raw) } }
+        }
+      }
+    });
+  }
+
+  function exportProdutosCSV() {
+    if (!prodData.length) { alert('Nenhum dado para exportar.'); return; }
+    const totalPeriodo  = prodDataAll.reduce((s, d) => s + d.unitValue * d.count - (d.discountValue || 0), 0);
+    const totalPorGrupo = {};
+    prodDataAll.forEach(d => {
+      const cat = d.productCategory || 'Sem categoria';
+      totalPorGrupo[cat] = (totalPorGrupo[cat] || 0) + d.unitValue * d.count - (d.discountValue || 0);
+    });
+    const agg = {};
+    for (const d of prodData) {
+      const key = `${d.productName}||${d.barName || ''}||${d.eventName || ''}`;
+      if (!agg[key]) agg[key] = {
+        productName: d.productName, productCategory: d.productCategory,
+        barName: d.barName, eventName: d.eventName,
+        count: 0, value: 0, litros: 0, unitValue: d.unitValue
+      };
+      agg[key].count += d.count;
+      agg[key].value += d.unitValue * d.count - (d.discountValue || 0);
+      agg[key].litros += calcLitros(d);
+    }
+    const rows = Object.values(agg).sort((a, b) => b.value - a.value);
+    const header = 'Produto,Categoria,Bar,Evento,Qtd,Litros,Valor unit.,Valor total,% Total,% Grupo\n';
+    const body = rows.map(r => {
+      const pctT = totalPeriodo > 0 ? (r.value / totalPeriodo * 100).toFixed(2) : '0';
+      const pctG = (totalPorGrupo[r.productCategory] || 0) > 0
+        ? (r.value / totalPorGrupo[r.productCategory] * 100).toFixed(2) : '0';
+      return [
+        `"${(r.productName || '').replace(/"/g,'""')}"`,
+        `"${(r.productCategory || '').replace(/"/g,'""')}"`,
+        `"${(r.barName || '').replace(/"/g,'""')}"`,
+        `"${(r.eventName || '').replace(/"/g,'""')}"`,
+        r.count,
+        r.litros > 0 ? r.litros.toFixed(2).replace('.', ',') : '',
+        (r.unitValue / 100).toFixed(2).replace('.', ','),
+        (r.value / 100).toFixed(2).replace('.', ','),
+        pctT.replace('.', ',') + '%',
+        pctG.replace('.', ',') + '%'
+      ].join(',');
+    }).join('\n');
+    const blob = new Blob(['﻿' + header + body], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `busca_produtos_${document.getElementById('prodDtinicio').value}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function setProdStatus(state, text) {
+    const el = document.getElementById('prodStatus');
+    el.textContent = text;
+    el.style.color = state === 'error' ? 'var(--danger)' : state === 'loading' ? 'var(--warning)' : 'var(--text2)';
+  }
+
+  // ── Comparativos ─────────────────────────────────────────────────────────────
+  const COMP_COLORS = [
+    { bg:'#7c6aff', alpha:'rgba(124,106,255,0.85)' },
+    { bg:'#00d4aa', alpha:'rgba(0,212,170,0.85)'   },
+    { bg:'#ffb547', alpha:'rgba(255,181,71,0.85)'  },
+    { bg:'#ff4e6a', alpha:'rgba(255,78,106,0.85)'  },
+    { bg:'#4ecbff', alpha:'rgba(78,203,255,0.85)'  },
+  ];
+  let compPeriods = [];   // [{id, label, dtinicio, dtfim, data:[]}]
+  let compPeriodId = 0;
+  let compChartFat = null, compChartQtd = null, compChartMix = null;
+
+  // ── Store Picker Comparativos ────────────────────────────────────────────────
+  function initCompPicker() {
+    const c = document.getElementById('compStoreCheckboxes');
+    c.innerHTML = lojas.map(l => `
+      <div class="store-option">
+        <input type="checkbox" id="compL_${l.id}" value="${l.id}" checked onchange="updateCompStoreSummary()">
+        <label for="compL_${l.id}" style="cursor:pointer">${l.name}</label>
+      </div>`).join('');
+    document.getElementById('compCheckAll').checked = true;
+    updateCompStoreSummary();
+  }
+  function toggleCompStorePicker() {
+    document.getElementById('compStoreTrigger').classList.toggle('open');
+    document.getElementById('compStoreDropdown').classList.toggle('open');
+  }
+  function toggleCompAll(checked) {
+    lojas.forEach(l => { document.getElementById('compL_' + l.id).checked = checked; });
+    updateCompStoreSummary();
+  }
+  function updateCompStoreSummary() {
+    const checked = getCompCheckedLojas();
+    const all = checked.length === lojas.length;
+    document.getElementById('compCheckAll').checked = all;
+    document.getElementById('compStoreSummary').textContent =
+      all ? `Todas (${lojas.length})` :
+      checked.length === 0 ? 'Nenhuma' :
+      checked.length === 1 ? lojas.find(l => l.id === checked[0])?.name :
+      `${checked.length} lojas`;
+  }
+  function getCompCheckedLojas() {
+    return lojas.filter(l => document.getElementById('compL_' + l.id)?.checked).map(l => l.id);
+  }
+  document.addEventListener('click', e => {
+    const p = document.getElementById('compStorePicker');
+    if (p && !p.contains(e.target)) {
+      document.getElementById('compStoreTrigger')?.classList.remove('open');
+      document.getElementById('compStoreDropdown')?.classList.remove('open');
+    }
+  });
+
+  // ── Períodos ─────────────────────────────────────────────────────────────────
+  function addCompPeriod() {
+    if (compPeriods.length >= 5) return;
+    const id = ++compPeriodId;
+    const idx = compPeriods.length;
+    const d = getDefaultDates();
+    // desloca cada período novo 1 mês antes
+    const shift = idx;
+    const start = new Date(d.start + 'T00:00:00');
+    const end   = new Date(d.end   + 'T00:00:00');
+    start.setMonth(start.getMonth() - shift);
+    end.setMonth(end.getMonth() - shift);
+    const fmt = d => d.toISOString().split('T')[0];
+    const label = `Período ${idx + 1}`;
+    compPeriods.push({ id, label, dtinicio: fmt(start), dtfim: fmt(end), data: [] });
+    renderCompPeriods();
+  }
+  function removeCompPeriod(id) {
+    compPeriods = compPeriods.filter(p => p.id !== id);
+    renderCompPeriods();
+  }
+  function renderCompPeriods() {
+    const wrap = document.getElementById('compPeriodsWrap');
+    const addBtn = `<div class="comp-add-period" onclick="addCompPeriod()" id="compAddBtn" ${compPeriods.length >= 5 ? 'style="display:none"' : ''}><span>＋</span><div>Adicionar período</div></div>`;
+    wrap.innerHTML = compPeriods.map((p, i) => {
+      const c = COMP_COLORS[i % COMP_COLORS.length];
+      return `<div class="comp-period-card" id="pcard_${p.id}" style="border-left-color:${c.bg}">
+        ${compPeriods.length > 1 ? `<button class="comp-period-remove" onclick="removeCompPeriod(${p.id})">✕</button>` : ''}
+        <input class="period-label-input" value="${p.label}" oninput="compPeriods[${i}].label=this.value" placeholder="Nome do período">
+        <div class="comp-period-dates">
+          <input type="date" value="${p.dtinicio}" oninput="compPeriods[${i}].dtinicio=this.value">
+          <input type="date" value="${p.dtfim}"    oninput="compPeriods[${i}].dtfim=this.value">
+        </div>
+        <div class="comp-period-presets">
+          <button class="comp-preset-btn" onclick="setCompPreset(${i},'thismonth')">Este mês</button>
+          <button class="comp-preset-btn" onclick="setCompPreset(${i},'lastmonth')">Mês ant.</button>
+          <button class="comp-preset-btn" onclick="setCompPreset(${i},'last30')">30 dias</button>
+          <button class="comp-preset-btn" onclick="setCompPreset(${i},'last90')">90 dias</button>
+          <button class="comp-preset-btn" onclick="setCompPreset(${i},'last12m')">12 meses</button>
+        </div>
+      </div>`;
+    }).join('') + addBtn;
+  }
+  function setCompPreset(idx, preset) {
+    const now = new Date();
+    let s, e;
+    const fmt = d => d.toISOString().split('T')[0];
+    if (preset === 'thismonth') {
+      s = new Date(now.getFullYear(), now.getMonth(), 1);
+      e = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    } else if (preset === 'lastmonth') {
+      s = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      e = new Date(now.getFullYear(), now.getMonth(), 0);
+    } else if (preset === 'last30') {
+      e = new Date(now); s = new Date(now); s.setDate(s.getDate() - 29);
+    } else if (preset === 'last90') {
+      e = new Date(now); s = new Date(now); s.setDate(s.getDate() - 89);
+    } else if (preset === 'last12m') {
+      e = new Date(now); s = new Date(now); s.setFullYear(s.getFullYear() - 1);
+    }
+    compPeriods[idx].dtinicio = fmt(s);
+    compPeriods[idx].dtfim   = fmt(e);
+    renderCompPeriods();
+  }
+
+  // ── Fetch e build ─────────────────────────────────────────────────────────────
+  async function buscarComparativo() {
+    const checkedIds = getCompCheckedLojas();
+    if (!checkedIds.length) { alert('Selecione ao menos uma loja.'); return; }
+    if (!compPeriods.length) { alert('Adicione ao menos um período.'); return; }
+    for (const p of compPeriods) {
+      if (!p.dtinicio || !p.dtfim) { alert(`Preencha as datas do período "${p.label}".`); return; }
+    }
+    const totalCalls = compPeriods.reduce((s, p) => s + splitDates(p.dtinicio, p.dtfim, 5).length * checkedIds.length, 0);
+    let done = 0;
+    const prog = document.getElementById('compProgress');
+    const bar  = document.getElementById('compProgressBar');
+    prog.style.display = 'block'; bar.style.width = '0%';
+    document.getElementById('compStatus').textContent = 'Buscando dados...';
+
+    try {
+      for (const p of compPeriods) {
+        const results = await Promise.all(
+          checkedIds.map(lid =>
+            fetchSaida(lid, p.dtinicio, p.dtfim).then(r => { done += splitDates(p.dtinicio, p.dtfim, 5).length; bar.style.width = Math.round(done/totalCalls*100)+'%'; return r; }).catch(() => [])
+          )
+        );
+        p.data = results.flat().filter(Boolean).filter(d => !d.isRefunded);
+      }
+      prog.style.display = 'none';
+      renderComparativo();
+    } catch(e) {
+      document.getElementById('compStatus').textContent = 'Erro: ' + e.message;
+      prog.style.display = 'none';
+    }
+  }
+
+  function filtrarCompData(data) {
+    const cat  = document.getElementById('compCategoria').value.trim().toUpperCase();
+    const prod = sem(document.getElementById('compProduto').value.trim());
+    return data.filter(d => {
+      if (cat  && (d.productCategory || '').toUpperCase() !== cat) return false;
+      if (prod && !sem(d.productName || '').includes(prod)) return false;
+      return true;
+    });
+  }
+
+  function renderComparativo() {
+    const periodos = compPeriods.map((p, i) => ({
+      ...p,
+      filtered: filtrarCompData(p.data),
+      color: COMP_COLORS[i % COMP_COLORS.length]
+    }));
+    const total = periodos.reduce((s, p) => s + p.filtered.length, 0);
+    document.getElementById('compStatus').textContent =
+      `${total} registros | ${periodos.length} períodos | ${periodos.map(p=>p.filtered.length+' em '+p.label).join(' · ')}`;
+
+    renderCompKpis(periodos);
+    renderCompCharts(periodos);
+    renderCompInsights(periodos);
+    renderCompTable();
+    document.getElementById('compKpis').style.display    = 'grid';
+    document.getElementById('compInsights').style.display = 'block';
+    document.getElementById('compCharts').style.display  = 'grid';
+    document.getElementById('compTableWrap').style.display = 'block';
+  }
+
+  function calcMetrics(data) {
+    const fat  = data.reduce((s, d) => s + d.unitValue * d.count - (d.discountValue || 0), 0);
+    const qty  = data.reduce((s, d) => s + d.count, 0);
+    const ticket = qty ? fat / qty : 0;
+    const litros = data.filter(d => d.fractionUnit === 'L' && d.fractionalAmount)
+                       .reduce((s, d) => s + (d.fractionalAmount || 0), 0);
+    return { fat, qty, ticket, litros };
+  }
+
+  function renderCompKpis(periodos) {
+    const grid = document.getElementById('compKpis');
+    grid.style.gridTemplateColumns = `repeat(${periodos.length}, 1fr)`;
+    grid.innerHTML = periodos.map((p, i) => {
+      const m  = calcMetrics(p.filtered);
+      const mp = i > 0 ? calcMetrics(periodos[i-1].filtered) : null;
+      const delta = mp && mp.fat ? ((m.fat - mp.fat) / mp.fat * 100) : null;
+      const dClass = delta === null ? '' : delta >= 0 ? 'delta-up' : 'delta-down';
+      const dTxt   = delta === null ? '' : (delta >= 0 ? '▲' : '▼') + Math.abs(delta).toFixed(1) + '% vs anterior';
+      return `<div class="comp-kpi-card" style="border-top-color:${p.color.bg}">
+        <div class="comp-kpi-period" style="color:${p.color.bg}">${p.label}</div>
+        <div class="comp-kpi-row"><span class="comp-kpi-label">Faturamento</span><span class="comp-kpi-val">${fmt(m.fat)}</span></div>
+        <div class="comp-kpi-row"><span class="comp-kpi-label">Unidades</span><span class="comp-kpi-val">${fmtNum(m.qty)}</span></div>
+        <div class="comp-kpi-row"><span class="comp-kpi-label">Ticket médio</span><span class="comp-kpi-val">${fmt(m.ticket)}</span></div>
+        ${m.litros > 0 ? `<div class="comp-kpi-row"><span class="comp-kpi-label">Litros</span><span class="comp-kpi-val">${fmtL(m.litros)}</span></div>` : ''}
+        ${dTxt ? `<div class="comp-kpi-delta ${dClass}">${dTxt}</div>` : ''}
+      </div>`;
+    }).join('');
+  }
+
+  function renderCompCharts(periodos) {
+    const labels = periodos.map(p => p.label);
+    const fatData = periodos.map(p => calcMetrics(p.filtered).fat / 100);
+    const qtdData = periodos.map(p => calcMetrics(p.filtered).qty);
+    const colors  = periodos.map(p => p.color.alpha);
+    const borders = periodos.map(p => p.color.bg);
+    const chartOpts = (yFmt) => ({
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' ' + yFmt(ctx.raw) } } },
+      scales: {
+        x: { grid: { color: '#2e3144' }, ticks: { color: '#9aa0b8' } },
+        y: { grid: { color: '#2e3144' }, ticks: { color: '#9aa0b8', callback: v => yFmt(v) } }
+      }
+    });
+    if (compChartFat) compChartFat.destroy();
+    if (compChartQtd) compChartQtd.destroy();
+    if (compChartMix) compChartMix.destroy();
+
+    compChartFat = new Chart(document.getElementById('compChartFat'), {
+      type: 'bar',
+      data: { labels, datasets: [{ data: periodos.map(p => calcMetrics(p.filtered).fat / 100), backgroundColor: colors, borderColor: borders, borderWidth: 2, borderRadius: 6 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' R$' + Number(ctx.raw).toLocaleString('pt-BR',{minimumFractionDigits:2}) } } }, scales: { x: { grid:{color:'#2e3144'}, ticks:{color:'#9aa0b8'} }, y: { grid:{color:'#2e3144'}, ticks:{color:'#9aa0b8', callback: v => 'R$'+(v/100).toLocaleString('pt-BR',{maximumFractionDigits:0})} } } }
+    });
+    compChartQtd = new Chart(document.getElementById('compChartQtd'), {
+      type: 'bar',
+      data: { labels, datasets: [{ data: qtdData, backgroundColor: colors, borderColor: borders, borderWidth: 2, borderRadius: 6 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid:{color:'#2e3144'}, ticks:{color:'#9aa0b8'} }, y: { grid:{color:'#2e3144'}, ticks:{color:'#9aa0b8'} } } }
+    });
+
+    // Mix por categoria (stacked bar)
+    const allCats = [...new Set(periodos.flatMap(p => p.filtered.map(d => d.productCategory || 'Outro')))].filter(Boolean).sort();
+    const catColors = ['#7c6aff','#00d4aa','#ffb547','#ff4e6a','#4ecbff','#a78bfa','#34d399','#f97316','#60a5fa','#e879f9'];
+    const mixDatasets = allCats.map((cat, ci) => ({
+      label: cat,
+      data: periodos.map(p => p.filtered.filter(d => (d.productCategory||'Outro') === cat).reduce((s,d)=>s+d.unitValue*d.count-(d.discountValue||0),0)/100),
+      backgroundColor: catColors[ci % catColors.length] + 'cc',
+      borderColor: catColors[ci % catColors.length],
+      borderWidth: 1, borderRadius: 3
+    }));
+    compChartMix = new Chart(document.getElementById('compChartMix'), {
+      type: 'bar',
+      data: { labels, datasets: mixDatasets },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#9aa0b8', font: { size: 11 } } } }, scales: { x: { stacked: true, grid:{color:'#2e3144'}, ticks:{color:'#9aa0b8'} }, y: { stacked: true, grid:{color:'#2e3144'}, ticks:{color:'#9aa0b8', callback: v => 'R$'+(v/100).toLocaleString('pt-BR',{maximumFractionDigits:0})} } } }
+    });
+  }
+
+  function renderCompInsights(periodos) {
+    const list = document.getElementById('compInsightsList');
+    const insights = [];
+    if (periodos.length >= 2) {
+      const m0 = calcMetrics(periodos[0].filtered);
+      const mL = calcMetrics(periodos[periodos.length-1].filtered);
+      const delta = m0.fat ? (mL.fat - m0.fat) / m0.fat * 100 : 0;
+      if (delta > 5)  insights.push({ icon:'📈', txt:`Crescimento de <b>${delta.toFixed(1)}%</b> no faturamento de "${periodos[0].label}" para "${periodos[periodos.length-1].label}"` });
+      if (delta < -5) insights.push({ icon:'📉', txt:`Queda de <b>${Math.abs(delta).toFixed(1)}%</b> no faturamento de "${periodos[0].label}" para "${periodos[periodos.length-1].label}"` });
+      // Melhor período
+      const best = periodos.reduce((a, b) => calcMetrics(a.filtered).fat > calcMetrics(b.filtered).fat ? a : b);
+      insights.push({ icon:'🏆', txt:`Melhor período: <b>${best.label}</b> com faturamento de <b>${fmt(calcMetrics(best.filtered).fat)}</b>` });
+      // Variação de unidades
+      const dQty = m0.qty ? (mL.qty - m0.qty) / m0.qty * 100 : 0;
+      if (Math.abs(dQty) > 5) insights.push({ icon: dQty > 0 ? '⬆️' : '⬇️', txt:`Unidades vendidas ${dQty > 0 ? 'cresceram' : 'caíram'} <b>${Math.abs(dQty).toFixed(1)}%</b>` });
+    }
+    if (!insights.length) insights.push({ icon:'ℹ️', txt:'Adicione mais períodos para ver comparações automáticas.' });
+    list.innerHTML = insights.map(i => `<div class="insight-item"><span class="insight-icon">${i.icon}</span><span>${i.txt}</span></div>`).join('');
+  }
+
+  let compTableData = [];
+  function renderCompTable() {
+    const search = sem(document.getElementById('compTableSearch')?.value || '');
+    const periodos = compPeriods.map((p, i) => ({ ...p, filtered: filtrarCompData(p.data), color: COMP_COLORS[i % COMP_COLORS.length] }));
+
+    // Agrupa por produto
+    const map = {};
+    periodos.forEach((p, pi) => {
+      p.filtered.forEach(d => {
+        const key = d.productName;
+        if (!map[key]) map[key] = { name: key, cat: d.productCategory || '', periods: periodos.map(() => ({ fat: 0, qty: 0 })) };
+        map[key].periods[pi].fat += d.unitValue * d.count - (d.discountValue || 0);
+        map[key].periods[pi].qty += d.count;
+      });
+    });
+    compTableData = Object.values(map).sort((a, b) => {
+      const fa = a.periods.reduce((s,p)=>s+p.fat,0);
+      const fb = b.periods.reduce((s,p)=>s+p.fat,0);
+      return fb - fa;
+    });
+
+    const filtered = search ? compTableData.filter(r => sem(r.name).includes(search)) : compTableData;
+
+    // Cabeçalho dinâmico
+    const thead = document.querySelector('#compTable thead');
+    thead.innerHTML = `<tr>
+      <th>Produto</th><th>Cat.</th>
+      ${periodos.map(p => `<th style="color:${p.color.bg}" colspan="2">${p.label}</th>`).join('')}
+      ${periodos.length >= 2 ? '<th>Δ% Fat.</th>' : ''}
+    </tr><tr>
+      <th></th><th></th>
+      ${periodos.map(() => '<th style="font-size:10px;color:var(--text2)">R$</th><th style="font-size:10px;color:var(--text2)">Qtd</th>').join('')}
+      ${periodos.length >= 2 ? '<th></th>' : ''}
+    </tr>`;
+
+    const tbody = document.getElementById('compTbody');
+    tbody.innerHTML = filtered.slice(0, 100).map(r => {
+      const delta = periodos.length >= 2 && r.periods[0].fat
+        ? (r.periods[periodos.length-1].fat - r.periods[0].fat) / r.periods[0].fat * 100
+        : null;
+      const dClass = delta === null ? '' : delta >= 0 ? 'td-delta-up' : 'td-delta-down';
+      const dTxt   = delta === null ? '—' : (delta >= 0 ? '+' : '') + delta.toFixed(1) + '%';
+      return `<tr>
+        <td title="${r.name}">${r.name}</td>
+        <td style="color:var(--text2);font-size:11px">${r.cat}</td>
+        ${r.periods.map(p=>`<td>${fmt(p.fat)}</td><td>${fmtNum(p.qty)}</td>`).join('')}
+        ${periodos.length >= 2 ? `<td class="${dClass}">${dTxt}</td>` : ''}
+      </tr>`;
+    }).join('') || '<tr><td colspan="20" style="text-align:center;color:var(--text2);padding:24px">Nenhum produto encontrado</td></tr>';
+  }
+
+  function exportCompCSV() {
+    const periodos = compPeriods.map(p => ({ ...p, filtered: filtrarCompData(p.data) }));
+    const header = ['Produto','Categoria', ...periodos.flatMap(p => [p.label+' Fat.', p.label+' Qtd'])].join(';');
+    const rows = compTableData.map(r =>
+      [r.name, r.cat, ...r.periods.flatMap(p => [(p.fat/100).toFixed(2).replace('.',','), p.qty])].join(';')
+    );
+    const csv = [header, ...rows].join('\n');
+    const a = document.createElement('a');
+    a.href = 'data:text
