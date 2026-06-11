@@ -1341,4 +1341,43 @@ async function compareData() {
           <thead><tr><th>Produto</th>${periods.map(p=>`<th class="num" style="min-width:110px;">${esc(p.label)}</th>`).join('')}</tr></thead>
           <tbody>
             ${top30.map(nm=>`<tr>
-              <td style="font-size:.8rem;max-
+              <td style="font-size:.8rem;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${nm}">${esc(nm)}</td>
+              ${periods.map(p=>`<td class="num">${p.byP[nm]?fBRL(p.byP[nm].value):'—'}</td>`).join('')}
+            </tr>`).join('')}
+          </tbody>
+        </table></div>
+      </div>`;
+  } catch(e) {
+    console.error('[compareData]',e);
+    showT('Erro: '+e.message, 8000);
+    res.innerHTML='<div style="text-align:center;padding:32px;color:#EF5350;">Erro ao carregar comparativo</div>';
+  } finally {
+    btn.disabled=false;
+    status.textContent='';
+  }
+}
+
+// ─── Load indicator ──────────────────────────────────────────────────────────
+function setLoad(on, msg='') {
+  const el=document.getElementById('lod');
+  const tx=document.getElementById('lodTxt');
+  if (el) el.style.display=on?'flex':'none';
+  if (tx && msg) tx.textContent=msg;
+}
+function showT(msg, dur=6000) {
+  const t=document.getElementById('toast');
+  if (!t) return;
+  t.textContent=msg; t.style.display='block'; t.style.zIndex='9000';
+  if(t._tid) clearTimeout(t._tid);
+  t._tid=setTimeout(()=>{ t.style.display='none'; }, dur);
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  setRange('today');
+  await loadLojas();
+  checkSrv();
+});
+</script>
+</body>
+</html>
