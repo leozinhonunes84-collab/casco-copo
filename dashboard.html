@@ -141,8 +141,13 @@ tr.chope-sub:hover td{background:rgba(255,255,255,.035);}
 .login-logo span{color:var(--text);font-weight:300;}
 .login-sub{font-size:.75rem;color:var(--muted);margin-bottom:28px;text-transform:uppercase;letter-spacing:1px;}
 .login-label{font-size:.72rem;color:var(--muted);text-align:left;margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
-.login-input{width:100%;background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:11px 14px;font-size:.95rem;outline:none;transition:border-color .2s;margin-bottom:6px;}
+.login-input{width:100%;background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:11px 14px;font-size:.95rem;outline:none;transition:border-color .2s;margin-bottom:6px;-webkit-text-security:disc;}
 .login-input:focus{border-color:var(--amber);}
+/* Esconde botão "mostrar senha" do browser */
+.login-input::-ms-reveal{display:none;}
+.login-input::-ms-clear{display:none;}
+.login-input::-webkit-credentials-auto-fill-button{display:none;}
+.login-input::-webkit-inner-spin-button{display:none;}
 .login-err{font-size:.74rem;color:#F44336;min-height:18px;margin-bottom:10px;text-align:left;}
 .login-btn{width:100%;padding:12px;background:var(--amber);color:#000;font-weight:800;font-size:.95rem;border:none;border-radius:8px;cursor:pointer;letter-spacing:.4px;transition:background .15s;}
 .login-btn:hover{background:var(--amber-dark);}
@@ -158,7 +163,7 @@ tr.chope-sub:hover td{background:rgba(255,255,255,.035);}
     <div class="login-logo">Brewteco<span> Dashboard</span></div>
     <div class="login-sub">Acesso restrito</div>
     <div class="login-label">Senha</div>
-    <input id="loginPwd" class="login-input" type="password" placeholder="••••••••••••••" autocomplete="off" onkeydown="if(event.key==='Enter')doLogin()">
+    <input id="loginPwd" class="login-input" type="password" placeholder="••••••••••••••" autocomplete="new-password" onkeydown="if(event.key==='Enter')doLogin()">
     <div class="login-err" id="loginErr"></div>
     <button class="login-btn" onclick="doLogin()">🔐 Entrar</button>
     <div class="login-footer">🍺 Onze Copos — uso interno</div>
@@ -413,9 +418,17 @@ const SZ = [
 function parseSz(name) {
   if (!name) return null;
   const n = name.trim().toUpperCase();
+  // Prefixo HH (Happy Hour) = P 300ml
+  if (/^HH\s+/.test(n)) return { size:'P', liters:.300, parent:n.replace(/^HH\s+/,'').trim() };
+  // Tamanho no FIM do nome (padrão)
   for (const s of SZ)
     if (n.endsWith(' ' + s.size))
       return { ...s, parent: n.slice(0, -(s.size.length + 1)).trim() };
+  // Tamanho no MEIO do nome (ex: "PILSENZINHA G ANIVERSARIO")
+  for (const s of SZ) {
+    const idx = n.indexOf(' ' + s.size + ' ');
+    if (idx !== -1) return { ...s, parent: n.slice(0, idx).trim() };
+  }
   return null;
 }
 function calcL(row) {
@@ -431,6 +444,16 @@ const fL   = v => Number(v || 0).toLocaleString('pt-BR', {minimumFractionDigits:
 const fP   = v => Number(v || 0).toFixed(1) + '%';
 function fK(n) { if (n>=1e6) return (n/1e6).toFixed(1)+'M'; if (n>=1e3) return (n/1e3).toFixed(1)+'k'; return fN(n); }
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ─── Tab switching ───────────────────────────────────────────────────────────
+function switchTab(id) {
+  document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
+  const content=document.getElementById('tab-'+id);
+  if(content) content.classList.add('active');
+  const tabs=document.querySelectorAll('.tab');
+  tabs.forEach(t=>{ if(t.getAttribute('onclick')&&t.getAttribute('onclick').includes("'"+id+"'")) t.classList.add('active'); });
+}
 
 // ─── Dates ────────────────────────────────────────────────────────────────────
 function toISO(d) { return d.toISOString().split('T')[0]; }
