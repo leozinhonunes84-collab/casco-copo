@@ -398,7 +398,9 @@ tr.chope-sub:hover td{background:rgba(255,255,255,.035);}
 
 <script>
 'use strict';
-const API = window.location.origin;  // porta automática — sem conflito fixo
+const ZIG_BASE  = 'https://api.zigcore.com.br/integration';
+const ZIG_TOKEN = atob('OGM3YzAxMDk3MTFlZWVmNmM5OTQ0YTgyOWEzYzJmZDZhNDQwMzQ3YjEzMTcyYjQxMGYwMmYxZjNiZjIzOWQ5ZA==');
+const ZIG_HDR   = () => ({ Authorization: ZIG_TOKEN, 'Content-Type': 'application/json', Accept: 'application/json' });
 const PAL = ['#F5A623','#2196F3','#4CAF50','#E91E63','#9C27B0','#FF5722','#00BCD4','#FFEB3B','#795548','#607D8B'];
 
 // ─── Chope sizes ──────────────────────────────────────────────────────────────
@@ -461,20 +463,30 @@ let chopeTags=[];
 let chopeRowNames=[];  // index -> parent name
 let expandedIdx=new Set();
 
-// ─── Server ───────────────────────────────────────────────────────────────────
+// ─── API direta (sem servidor local) ─────────────────────────────────────────
+const LOJAS_FIXAS = [
+  { name: 'Brewteco Gavea',         id: 'f3d030c4-3f22-4892-b796-511171299f0f' },
+  { name: 'Brewteco Botafogo',      id: 'fcd98c13-ad08-4650-8973-43d64b908849' },
+  { name: 'Brewteco Leblon',        id: 'dab9c364-a43f-4dbf-a23e-65d053fbf295' },
+  { name: 'Brewteco Morro da Urca', id: '806165c1-773b-460e-aabd-9ef46a014b21' },
+  { name: 'Brewteco Rosas',         id: 'bdc030b2-df05-4359-9f3d-bd653955ce9c' },
+  { name: 'Brewteco Tijuca',        id: 'ddc67e6b-cd4a-4df8-b7bf-cb80bf662c74' },
+  { name: 'Brewteco Ferradura',     id: 'ff3be8c2-1280-425d-a1ac-462e2273fcf0' },
+  { name: 'rufi.bar',               id: 'aec374d7-5e9e-4b08-960c-cf21cfea98c1' },
+  { name: 'Brewteco Laranjeiras',   id: '2c912b55-538b-4462-9b74-1f301db25cb5' },
+];
 async function checkSrv() {
   try {
-    const r=await fetch(API+'/api/lojas',{signal:AbortSignal.timeout(3000)});
-    if (r.ok) { dot(true); return true; }
-  } catch {}
-  dot(false); return false;
+    const r=await fetch(ZIG_BASE+'/erp/lojas?rede=brewteco',{headers:ZIG_HDR(),signal:AbortSignal.timeout(5000)});
+    dot(r.ok); return r.ok;
+  } catch { dot(false); return false; }
 }
 function dot(on) {
   document.getElementById('sDot').className='dot'+(on?' on':'');
-  document.getElementById('sSts').textContent=on?'online':'OFFLINE — rode: python app.py';
+  document.getElementById('sSts').textContent=on?'API ok':'API offline';
 }
 async function loadLojas() {
-  const r=await fetch(API+'/api/lojas'); const j=await r.json(); lojas=j.lojas||[];
+  lojas = LOJAS_FIXAS;
   const list=document.getElementById('lojaChkList');
   list.innerHTML=lojas.map(l=>
     `<label onmouseenter="this.style.background='rgba(255,255,255,0.04)'" onmouseleave="this.style.background=''"
@@ -536,17 +548,26 @@ function dateChunks(dtI, dtF, maxDays=5) {
   return chunks;
 }
 
+function normList(raw) {
+  if (Array.isArray(raw)) return raw;
+  if (raw && typeof raw==='object') {
+    for (const k of ['data','items','results','content','records','list','saidas','vendas','products','orders','registros','response','sales','movements','salesData'])
+      if (Array.isArray(raw[k])) return raw[k];
+  }
+  return [];
+}
 async function fetchLoja(id, dtI, dtF) {
   const chunks=dateChunks(dtI,dtF);
   let allRows=[];
   for (const c of chunks) {
-    const url=`${API}/api/saida-produtos?loja=${id}&dtinicio=${c.start}&dtfim=${c.end}`;
+    const url=`${ZIG_BASE}/erp/saida-produtos?loja=${id}&dtinicio=${c.start}&dtfim=${c.end}`;
     console.log('[Brewteco] →',url);
-    const r=await fetch(url);
-    const j=await r.json();
-    console.log('[Brewteco] ←',j.count??'?','itens',j.error?'ERRO:'+j.error:'ok');
-    if (j.error) throw new Error(j.error);
-    allRows=allRows.concat(j.data||[]);
+    const r=await fetch(url,{headers:ZIG_HDR()});
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const raw=await r.json();
+    const rows=normList(raw);
+    console.log('[Brewteco] ←',rows.length,'itens');
+    allRows=allRows.concat(rows);
   }
   return allRows;
 }
@@ -561,9 +582,11 @@ async function runDiag() {
   document.getElementById('diagMod').style.display='block';
   pre.textContent='Consultando API Zig (pode demorar alguns segundos)…';
   try {
-    const url=`${API}/api/diag?loja=${loja?.id||''}&dtinicio=${dtI}&dtfim=${dtF}`;
-    const r=await fetch(url);
-    const j=await r.json();
+    // Diagnóstico direto na API Zig
+    const url=`${ZIG_BASE}/erp/saida-produtos?loja=${loja?.id||''}&dtinicio=${dtI}&dtfim=${dtF}`;
+    const r=await fetch(url,{headers:ZIG_HDR()});
+    const rawD=await r.json();
+    const j={raw_status:r.status, raw_json_type:typeof rawD, raw_count:normList(rawD).length, raw_preview:JSON.stringify(rawD).slice(0,300)};
     let s='';
     s+=`Loja: ${loja?.name||'?'}\n`;
     s+=`Período: ${dtI} → ${dtF}\n`;
@@ -615,7 +638,7 @@ async function runDiag() {
     }
     pre.textContent=s;
   } catch(e) {
-    pre.textContent='Erro ao chamar /api/diag: '+e.message+'\n(Reinicie o servidor: python app.py)';
+    pre.textContent='Erro ao consultar API Zig: '+e.message;
   }
 }
 
@@ -644,8 +667,8 @@ async function loadData() {
     }
 
     if (rawData.length===0) {
-      if (lojaErros.length) showT('Erro ao buscar: '+lojaErros.join(', ')+' — clique 🔍 Diag para detalhes');
-      else showT('0 registros para este período/loja — clique 🔍 Diag para inspecionar a API');
+      if (lojaErros.length) showT('Erro ao buscar: '+lojaErros.join(', ')+' — verifique sua conexão');
+      else showT('0 registros para este período. Tente outro intervalo de datas.');
     } else {
       document.getElementById('sSts').textContent=`online · ${rawData.length} reg.`;
     }
