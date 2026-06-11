@@ -238,7 +238,7 @@ tr.chope-sub:hover td{background:rgba(255,255,255,.035);}
   </div>
   <div class="cg"><span class="cl">Início</span><input type="date" id="dtI"></div>
   <div class="cg"><span class="cl">Fim</span><input type="date" id="dtF"></div>
-  <button class="btn btn-p" id="btnAt" onclick="loadData()">🔄 Atualizar</button>
+  <button class="btn btn-p" id="btnAt" onclick="loadData()">🔍 Buscar</button>
   <button class="btn btn-s" onclick="runDiag()" title="Ver resposta bruta da API Zig" style="padding:6px 11px;">🔍 Diag</button>
 </div>
 
@@ -300,7 +300,7 @@ tr.chope-sub:hover td{background:rgba(255,255,255,.035);}
       <table>
         <thead id="chThead"></thead>
         <tbody id="chTbody">
-          <tr><td colspan="9"><div class="empty"><div class="empty-ico">🍺</div><h3>Clique em Atualizar</h3></div></td></tr>
+          <tr><td colspan="9"><div class="empty"><div class="empty-ico">🍺</div><h3>Clique em Buscar</h3></div></td></tr>
         </tbody>
       </table>
     </div>
@@ -343,7 +343,7 @@ tr.chope-sub:hover td{background:rgba(255,255,255,.035);}
           </tr>
         </thead>
         <tbody id="bTbody">
-          <tr><td colspan="10"><div class="empty"><div class="empty-ico">🔍</div><h3>Clique em Atualizar</h3></div></td></tr>
+          <tr><td colspan="10"><div class="empty"><div class="empty-ico">🔍</div><h3>Clique em Buscar</h3></div></td></tr>
         </tbody>
         <tfoot id="bTfoot"></tfoot>
       </table>
@@ -381,7 +381,7 @@ tr.chope-sub:hover td{background:rgba(255,255,255,.035);}
     <button class="gchip active" id="gchip-TODOS"   onclick="setDashGrupo('TODOS')">📋 Todos</button>
     <button class="gchip"        id="gchip-CHOPE"   onclick="setDashGrupo('CHOPE')">🍺 Chope</button>
     <button class="gchip"        id="gchip-COMIDA"  onclick="setDashGrupo('COMIDA')">🍽️ Comida</button>
-    <button class="gchip"        id="gchip-BEBIDA"  onclick="setDashGrupo('BEBIDA')">🥤 Bebida</button>
+    <button class="gchip"        id="gchip-BEBIDA"  onclick="setDashGrupo('BEBIDA')">🍺 Cerveja</button>
     <button class="gchip"        id="gchip-DRINQUE" onclick="setDashGrupo('DRINQUE')">🍹 Drinque</button>
   </div>
   <div class="kpi-grid">
@@ -1080,7 +1080,7 @@ function renderBusca() {
   });
 
   if(allTags.length) {
-    rows=rows.filter(r=>allTags.every(t=>
+    rows=rows.filter(r=>allTags.some(t=>
       r.productName.includes(t)||
       r.productCategory.toUpperCase().includes(t)||
       r.barName.toUpperCase().includes(t)
@@ -1341,43 +1341,4 @@ async function compareData() {
           <thead><tr><th>Produto</th>${periods.map(p=>`<th class="num" style="min-width:110px;">${esc(p.label)}</th>`).join('')}</tr></thead>
           <tbody>
             ${top30.map(nm=>`<tr>
-              <td style="font-size:.8rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(nm)}">${esc(nm)}</td>
-              ${periods.map(p=>`<td class="num" style="font-size:.82rem;">${p.byP[nm]?.value?fBRL(p.byP[nm].value):'<span style="color:var(--muted)">—</span>'}</td>`).join('')}
-            </tr>`).join('')}
-          </tbody>
-        </table></div>
-      </div>
-    `;
-  } catch(e) {
-    showT('Erro: '+e.message);
-    document.getElementById('compResults').innerHTML='<div class="empty"><div class="empty-ico">❌</div><p>Erro ao carregar comparativo.</p></div>';
-  } finally {
-    btn.disabled=false;
-    document.getElementById('compStatus').textContent='';
-  }
-}
-
-// ─── Load indicator ──────────────────────────────────────────────────────────
-function setLoad(on, msg='') {
-  const el=document.getElementById('lod');
-  const tx=document.getElementById('lodTxt');
-  if (el) el.style.display=on?'flex':'none';
-  if (tx && msg) tx.textContent=msg;
-}
-function showT(msg, dur=6000) {
-  const t=document.getElementById('toast');
-  if (!t) return;
-  t.textContent=msg; t.style.display='block'; t.style.zIndex='9000';
-  if(t._tid) clearTimeout(t._tid);
-  t._tid=setTimeout(()=>{ t.style.display='none'; }, dur);
-}
-
-// ─── Init ─────────────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', async () => {
-  setRange('today');
-  await loadLojas();
-  checkSrv();
-});
-</script>
-</body>
-</html>
+              <td style="font-size:.8rem;max-
