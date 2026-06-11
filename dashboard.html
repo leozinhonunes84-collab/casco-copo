@@ -630,15 +630,18 @@ async function runDiag() {
 
 // ─── Load data ────────────────────────────────────────────────────────────────
 async function loadData() {
+  const btn=document.getElementById('btnAt');
+  const origTxt=btn?btn.innerHTML:'';
+  if(btn){btn.innerHTML='⏳ Buscando...';btn.disabled=true;}
+
   const dtI=document.getElementById('dtI').value;
   const dtF=document.getElementById('dtF').value||dtI;
-  if (!dtI) { showT('Selecione uma data de início.'); return; }
+  if (!dtI) { showT('Selecione uma data de início.',8000); if(btn){btn.innerHTML=origTxt;btn.disabled=false;} return; }
   document.getElementById('lojaDD').style.display='none';
   const targets=getTargetLojas();
-  if (!targets.length) { showT('Selecione pelo menos uma loja.'); return; }
+  if (!targets.length) { showT('Nenhuma loja encontrada — tente recarregar a página.',8000); if(btn){btn.innerHTML=origTxt;btn.disabled=false;} return; }
 
-  setLoad(true,'Aguarde...');
-  document.getElementById('btnAt').disabled=true;
+  setLoad(true,`Aguarde — 0 / ${targets.length} lojas...`);
   rawData=[]; rawPrev=[];
   const lojaErros=[];
 
@@ -649,12 +652,12 @@ async function loadData() {
       try {
         const rows=await fetchLoja(loja.id,dtI,dtF);
         rows.forEach(r=>{r._loja=loja.name; rawData.push(r);});
-      } catch(e) { lojaErros.push(loja.name); console.warn(loja.name, e.message); }
+      } catch(e) { lojaErros.push(loja.name); console.error('[loadData]',loja.name,e); }
     }
 
     if (rawData.length===0) {
-      if (lojaErros.length) showT('Erro ao buscar: '+lojaErros.join(', ')+' — verifique sua conexão');
-      else showT('0 registros para este período. Tente outro intervalo de datas.');
+      if (lojaErros.length) showT('Erro nas lojas: '+lojaErros.join(', ')+' — verifique conexão',8000);
+      else showT('Nenhum registro neste período.',6000);
     } else {
       document.getElementById('sSts').textContent=`online · ${rawData.length} reg.`;
     }
@@ -669,8 +672,14 @@ async function loadData() {
     }
 
     processAll(targets,dtI,dtF,prev);
-  } catch(e) { showT('Erro: '+e.message); }
-  finally { setLoad(false); document.getElementById('btnAt').disabled=false; }
+  } catch(e) {
+    console.error('[loadData catch]',e);
+    showT('Erro: '+e.message,10000);
+  }
+  finally {
+    setLoad(false);
+    if(btn){btn.innerHTML=origTxt;btn.disabled=false;}
+  }
 }
 
 // ─── Process all ─────────────────────────────────────────────────────────────
@@ -1323,6 +1332,21 @@ async function compareData() {
     btn.disabled=false;
     document.getElementById('compStatus').textContent='';
   }
+}
+
+// ─── Load indicator ──────────────────────────────────────────────────────────
+function setLoad(on, msg='') {
+  const el=document.getElementById('lod');
+  const tx=document.getElementById('lodTxt');
+  if (el) el.style.display=on?'flex':'none';
+  if (tx && msg) tx.textContent=msg;
+}
+function showT(msg, dur=6000) {
+  const t=document.getElementById('toast');
+  if (!t) return;
+  t.textContent=msg; t.style.display='block'; t.style.zIndex='9000';
+  if(t._tid) clearTimeout(t._tid);
+  t._tid=setTimeout(()=>{ t.style.display='none'; }, dur);
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
