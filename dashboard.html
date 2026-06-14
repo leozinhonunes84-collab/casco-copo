@@ -77,7 +77,7 @@ th:hover{color:var(--amber);}
 td{padding:7px 12px;border-bottom:1px solid rgba(255,255,255,0.035);}
 tr:last-child td{border-bottom:none;}
 tr:hover td{background:rgba(255,255,255,0.025);}
-td.num{text-align:right;font-variant-numeric:tabular-nums;}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;}
 
 .badge{display:inline-block;padding:2px 6px;border-radius:20px;font-size:.67rem;font-weight:600;}
 .b-chope{background:rgba(245,166,35,.15);color:var(--amber);}
@@ -715,7 +715,7 @@ function processAll(targets, dtI, dtF, prev) {
 
   data.forEach(x=>{
     const cnt=x.count||0;
-    const fat=(x.unitValue||0)*cnt-(x.discountValue||0);
+    const fat=Math.max(0,(x.unitValue||0)*cnt-(x.discountValue||0));
     const lit=calcL(x);
     const cat=x.productCategory||'Sem categoria';
     const nm=x.productName||'(sem nome)';
@@ -787,7 +787,7 @@ function renderDash() {
   const bp={}, bc={}, szT={REGUA:0,P:0,G:0,'1L':0};
   data.forEach(x=>{
     const c=x.count||0;
-    const f=(x.unitValue||0)*c-(x.discountValue||0);
+    const f=Math.max(0,(x.unitValue||0)*c-(x.discountValue||0));
     const l=calcL(x);
     const cat=x.productCategory||'Sem categoria';
     const nm=x.productName||'(sem nome)';
@@ -863,7 +863,7 @@ function buildChopeData(data) {
     const sz=parsed.size;
     if (!chopeData[par]) chopeData[par]={REGUA:null,P:null,G:null,'1L':null,'?':null,_fat:0,_qty:0,_litros:0,_items:[]};
     if (!chopeData[par][sz]) chopeData[par][sz]={qty:0,val:0,litros:0};
-    const fat=(d.unitValue||0)*(d.count||0)-(d.discountValue||0);
+    const fat=Math.max(0,(d.unitValue||0)*(d.count||0)-(d.discountValue||0));
     chopeData[par][sz].qty+=d.count||0;
     chopeData[par][sz].val+=fat;
     chopeData[par][sz].litros+=liters*(d.count||0);
@@ -913,7 +913,7 @@ function renderChopesTab() {
   const szActive=COLS.filter(s=>document.getElementById('sz'+s.replace('1L','1L'))?.checked);
 
   const rows=Object.entries(chopeData)
-    .filter(([name])=>!allTags.length||allTags.every(t=>name.includes(t)))
+    .filter(([name])=>!allTags.length||allTags.some(t=>name.includes(t)))
     .sort((a,b)=>b[1]._fat-a[1]._fat);
 
   let totLit=0,totFat=0;
@@ -997,7 +997,7 @@ function buildBuscaRows() {
     const loja=x._loja||'';
     const event=x.eventName||x.eventDescription||'';
     const cnt=x.count||0;
-    const fat=(x.unitValue||0)*cnt-(x.discountValue||0);
+    const fat=Math.max(0,(x.unitValue||0)*cnt-(x.discountValue||0));
     const lit=calcL(x);
     const key=nm+'~~'+cat+'~~'+loja;
     if (!map[key]) map[key]={productName:nm,productCategory:cat,barName:loja,eventName:event,count:0,value:0,litros:0,refundCount:0};
@@ -1129,10 +1129,10 @@ function renderBusca() {
     }
 
     const mainRow=`<tr ${isAlimPrinc?`onclick="toggleBusca('${esc(r.alimentoKey||r.productName)}')" style="cursor:pointer;"`:''}>
-      <td>${isAlimPrinc?(expanded?'▼ ':'▶ '):''}${esc(r.productName)}</td>
-      <td>${esc(r.productCategory)}</td>
-      <td>${esc(r.barName)}</td>
-      <td style="font-size:.71rem;color:var(--muted);">${esc(r.eventName||'—')}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(r.productName)}">${isAlimPrinc?(expanded?'▼ ':'▶ '):''}${esc(r.productName)}</td>
+      <td style="max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(r.productCategory)}">${esc(r.productCategory)}</td>
+      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(r.barName)}">${esc(r.barName.replace('Brewteco ',''))}</td>
+      <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.71rem;color:var(--muted);" title="${esc(r.eventName||'')}">${esc(r.eventName||'—')}</td>
       <td class="num">${fN(r.count)}</td>
       <td class="num">${r.litros>0?fL(r.litros):'—'}</td>
       <td class="num">${fBRL(r.value)}</td>
@@ -1170,7 +1170,7 @@ function renderBusca() {
       if(!ps) return;
       if(!byPack[ps]) byPack[ps]={pedidos:0,value:0};
       byPack[ps].pedidos++;
-      byPack[ps].value+=(x.unitValue||0)*c-(x.discountValue||0);
+      byPack[ps].value+=Math.max(0,(x.unitValue||0)*c-(x.discountValue||0));
     });
     const entries=Object.entries(byPack)
       .map(([p,d])=>({p:+p,...d}))
@@ -1212,12 +1212,15 @@ function renderBusca() {
     return mainRow+subHtml;
   }).join('');
 
-  document.getElementById('bTfoot').innerHTML=`<tr>
-    <td colspan="4"><strong>Total (${total} linhas)</strong></td>
-    <td class="num"><strong>${fN(totCount)}</strong></td>
-    <td class="num"><strong>${totLit>0?fL(totLit):'—'}</strong></td>
-    <td class="num"><strong>${fBRL(totVal)}</strong></td>
-    <td class="num"></td><td class="num"></td><td></td>
+  const pctSel=totalFatAll>0?totVal/totalFatAll*100:0;
+  document.getElementById('bTfoot').innerHTML=`<tr style="font-weight:700;background:rgba(245,166,35,.07);">
+    <td colspan="4">Total (${total} linha${total!==1?'s':''})</td>
+    <td class="num">${fN(totCount)}</td>
+    <td class="num">${totLit>0?fL(totLit):'—'}</td>
+    <td class="num">${fBRL(totVal)}</td>
+    <td class="num" style="color:var(--amber);">${fP(pctSel)}<span style="font-size:.65rem;font-weight:400;display:block;opacity:.6;">do total</span></td>
+    <td class="num"></td>
+    <td></td>
   </tr>`;
 }
 
@@ -1293,6 +1296,28 @@ function _renderCompSlots() {
   document.getElementById('btnAddSlot').disabled=compSlots.length>=4;
 }
 
+function toggleCompRow(idx){
+  const trs=document.querySelectorAll('#cdet-loja-'+idx);
+  const tri=document.getElementById('ctri-'+idx);
+  if(!trs.length)return;
+  const open=trs[0].style.display!=='none';
+  trs.forEach(tr=>tr.style.display=open?'none':'table-row');
+  if(tri)tri.textContent=open?'▶':'▼';
+}
+function filterCompTable(q){
+  const v=(q||'').toUpperCase().trim();
+  document.querySelectorAll('#compTbl .comp-prod-row').forEach(tr=>{
+    const nm=tr.dataset.nm||'';
+    const show=!v||nm.includes(v);
+    tr.style.display=show?'':'none';
+    if(!show){
+      const idx=tr.dataset.idx;
+      document.querySelectorAll('#cdet-loja-'+idx).forEach(r=>r.style.display='none');
+      const tri=document.getElementById('ctri-'+idx);
+      if(tri)tri.textContent='▶';
+    }
+  });
+}
 async function compareData() {
   if (!compSlots.length) { showT('Adicione pelo menos 1 período.'); return; }
   const btn=document.getElementById('btnComparar');
@@ -1311,16 +1336,20 @@ async function compareData() {
       const data=allRows.filter(x=>!x.isRefunded);
       let tF=0,tQ=0,tL=0; const byP={};
       data.forEach(x=>{
-        const cnt=x.count||0; const fat=(x.unitValue||0)*cnt-(x.discountValue||0); const lit=calcL(x);
+        const cnt=x.count||0; const fat=Math.max(0,(x.unitValue||0)*cnt-(x.discountValue||0)); const lit=calcL(x);
         tF+=fat; tQ+=cnt; tL+=lit;
         const nm=(x.productName||'').trim().toUpperCase();
-        if (!byP[nm]) byP[nm]={count:0,value:0,litros:0};
+        const lj=x._loja||'Sem loja';
+        if (!byP[nm]) byP[nm]={count:0,value:0,litros:0,byLoja:{}};
         byP[nm].count+=cnt; byP[nm].value+=fat; byP[nm].litros+=lit;
+        if(!byP[nm].byLoja[lj]) byP[nm].byLoja[lj]={count:0,value:0};
+        byP[nm].byLoja[lj].count+=cnt; byP[nm].byLoja[lj].value+=fat;
       });
       periods.push({label:s.label,dtI:s.dtI,dtF:s.dtF,tF,tQ,tL,byP});
     }
     status.textContent='';
-    const allP=[...new Set(periods.flatMap(p=>Object.keys(p.byP)))];
+    const SKIP_PRODS=new Set(['GORJETA','TAXA DE SERVIÇO','TAXA SERVICO','TAXA DE SERV.','COUVERT','COUVERT ARTISTICO','DESCONTO','TAXA SERVIÇO']);
+    const allP=[...new Set(periods.flatMap(p=>Object.keys(p.byP)))].filter(nm=>!SKIP_PRODS.has(nm));
     const top30=[...allP].sort((a,b)=>periods.reduce((s,p)=>s+(p.byP[b]?.value||0),0)-periods.reduce((s,p)=>s+(p.byP[a]?.value||0),0)).slice(0,30);
     res.innerHTML=`
       <div class="tc" style="margin-bottom:14px;">
@@ -1328,22 +1357,34 @@ async function compareData() {
         <div style="overflow-x:auto;"><table>
           <thead><tr><th>Métrica</th>${periods.map(p=>`<th class="num" style="min-width:120px;">${esc(p.label)}<br><span style="font-size:.63rem;font-weight:400;opacity:.6;">${p.dtI}→${p.dtF}</span></th>`).join('')}</tr></thead>
           <tbody>
-            <tr><td>💰 Faturamento</td>${periods.map(p=>`<td class="num" style="font-weight:700;">${fBRL(p.tF)}</td>`).join('')}</tr>
-            <tr><td>📦 Quantidade</td>${periods.map(p=>`<td class="num">${fN(p.tQ)}</td>`).join('')}</tr>
+            <tr><td>💰 Faturamento</td>${periods.map((p,i)=>{const prev=i>0?periods[0].tF:null;const ar=prev===null?'':(p.tF>prev?' <span style="color:#4CAF50">▲</span>':(p.tF<prev?' <span style="color:#EF5350">▼</span>':''));return `<td class="num" style="font-weight:700;">${fBRL(p.tF)}${ar}</td>`;}).join('')}</tr>
+            <tr><td>📦 Quantidade</td>${periods.map((p,i)=>{const prev=i>0?periods[0].tQ:null;const ar=prev===null?'':(p.tQ>prev?' <span style="color:#4CAF50">▲</span>':(p.tQ<prev?' <span style="color:#EF5350">▼</span>':''));return `<td class="num">${fN(p.tQ)}${ar}</td>`;}).join('')}</tr>
             <tr><td>🍺 Litros</td>${periods.map(p=>`<td class="num">${fL(p.tL)}</td>`).join('')}</tr>
             <tr><td>🎫 Ticket Médio</td>${periods.map(p=>`<td class="num">${p.tQ>0?fBRL(p.tF/p.tQ):'—'}</td>`).join('')}</tr>
           </tbody>
         </table></div>
       </div>
       <div class="tc">
-        <div class="th"><span class="tt">Top 30 Produtos — Comparativo</span></div>
-        <div style="overflow-x:auto;"><table>
-          <thead><tr><th>Produto</th>${periods.map(p=>`<th class="num" style="min-width:110px;">${esc(p.label)}</th>`).join('')}</tr></thead>
+        <div class="th">
+          <span class="tt">Top 30 Produtos — Comparativo</span>
+          <input class="srch" id="compSrch" placeholder="🔍 Buscar produto…" oninput="filterCompTable(this.value)" style="max-width:220px;">
+        </div>
+        <div style="overflow-x:auto;"><table id="compTbl">
+          <thead><tr><th style="width:24px;"></th><th>Produto</th>${periods.map(p=>`<th class="num" style="min-width:110px;">${esc(p.label)}</th>`).join('')}</tr></thead>
           <tbody>
-            ${top30.map(nm=>`<tr>
-              <td style="font-size:.8rem;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${nm}">${esc(nm)}</td>
-              ${periods.map(p=>`<td class="num">${p.byP[nm]?fBRL(p.byP[nm].value):'—'}</td>`).join('')}
-            </tr>`).join('')}
+            ${top30.map((nm,idx)=>{
+              const lojas=[...new Set(periods.flatMap(p=>Object.keys(p.byP[nm]?.byLoja||{})))].sort();
+              const detRows=lojas.map(lj=>`<tr class="cdet-loja" id="cdet-loja-${idx}" style="display:none;background:rgba(0,0,0,.25);">
+                <td></td>
+                <td style="padding:5px 12px 5px 28px;font-size:.75rem;color:var(--muted);">↳ ${esc(lj.replace('Brewteco ',''))}</td>
+                ${periods.map(p=>`<td class="num" style="font-size:.75rem;">${p.byP[nm]?.byLoja?.[lj]?fBRL(p.byP[nm].byLoja[lj].value):'—'}</td>`).join('')}
+              </tr>`).join('');
+              return `<tr class="comp-prod-row" data-nm="${nm}" data-idx="${idx}" onclick="toggleCompRow(${idx})" style="cursor:pointer;">
+                <td style="text-align:center;color:var(--muted);font-size:.7rem;" id="ctri-${idx}">▶</td>
+                <td style="font-size:.8rem;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${nm}">${esc(nm)}</td>
+                ${periods.map((p,i)=>{if(!p.byP[nm])return '<td class="num">—</td>';const cur=p.byP[nm].value;const prev=i>0&&periods[0].byP[nm]?periods[0].byP[nm].value:null;const ar=prev===null?'':(cur>prev?' <span style="color:#4CAF50;font-size:.7rem">▲</span>':(cur<prev?' <span style="color:#EF5350;font-size:.7rem">▼</span>':''));return `<td class="num">${fBRL(cur)}${ar}</td>`;}).join('')}
+              </tr>${detRows}`;
+            }).join('')}
           </tbody>
         </table></div>
       </div>`;
