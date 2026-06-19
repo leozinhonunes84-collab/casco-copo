@@ -1,0 +1,754 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Produto unico ZigPay</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f4;
+      --panel: #ffffff;
+      --line: #d9ddd2;
+      --text: #16201b;
+      --muted: #657167;
+      --green: #16704a;
+      --green-dark: #0f5136;
+      --amber: #b7791f;
+      --red: #b42318;
+      --blue: #245b9e;
+      --shadow: 0 16px 45px rgba(17, 24, 39, .08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      background:
+        linear-gradient(180deg, rgba(36, 91, 158, .12), transparent 260px),
+        var(--bg);
+      color: var(--text);
+    }
+
+    .shell {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 40px;
+    }
+
+    header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 22px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 30px;
+      line-height: 1.12;
+      letter-spacing: 0;
+    }
+
+    .status-pill {
+      min-width: 160px;
+      padding: 10px 13px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .72);
+      color: var(--muted);
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(320px, 420px) 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .form { padding: 18px; }
+
+    label {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 7px;
+    }
+
+    input[type="file"],
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 10px 12px;
+      color: var(--text);
+      font: inherit;
+      outline: none;
+      background: #fff;
+    }
+
+    textarea {
+      min-height: 112px;
+      resize: vertical;
+    }
+
+    input[type="file"]:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(36, 91, 158, .14);
+    }
+
+    .field { margin-bottom: 16px; }
+
+    .units-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .link-button {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--blue);
+      cursor: pointer;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 0;
+    }
+
+    .units {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 7px;
+      max-height: 330px;
+      overflow: auto;
+      padding-right: 2px;
+    }
+
+    .unit {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 8px 10px;
+      background: #fbfcfa;
+      color: var(--text);
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .unit input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--blue);
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+
+    .button {
+      appearance: none;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      min-height: 42px;
+      padding: 0 14px;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+
+    .button.primary {
+      background: var(--blue);
+      color: #fff;
+    }
+
+    .button.secondary {
+      background: #fff;
+      color: var(--green-dark);
+      border-color: var(--line);
+    }
+
+    .button:disabled {
+      cursor: not-allowed;
+      opacity: .62;
+    }
+
+    .sequence-list {
+      display: grid;
+      gap: 9px;
+    }
+
+    .sequence-item {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 8px;
+      align-items: center;
+      min-height: 52px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 9px 10px;
+      background: #fbfcfa;
+    }
+
+    .sequence-item label {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin: 0;
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .sequence-item input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--green);
+    }
+
+    .mini-button {
+      appearance: none;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      min-height: 36px;
+      padding: 0 10px;
+      background: #fff;
+      color: var(--green-dark);
+      cursor: pointer;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .mini-button:disabled {
+      cursor: not-allowed;
+      opacity: .45;
+    }
+
+    .content {
+      min-height: 520px;
+      overflow: hidden;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      border-bottom: 1px solid var(--line);
+    }
+
+    .metric {
+      padding: 16px;
+      border-right: 1px solid var(--line);
+    }
+
+    .metric:last-child { border-right: 0; }
+
+    .metric strong {
+      display: block;
+      font-size: 24px;
+      line-height: 1.1;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .result {
+      padding: 16px;
+      overflow: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 8px;
+      text-align: left;
+      vertical-align: top;
+      white-space: nowrap;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 12px;
+      background: #fbfcfa;
+      position: sticky;
+      top: 0;
+    }
+
+    .tag {
+      display: inline-flex;
+      min-height: 24px;
+      align-items: center;
+      border-radius: 999px;
+      padding: 0 9px;
+      font-weight: 700;
+      font-size: 12px;
+      background: #edf4ef;
+      color: var(--green-dark);
+    }
+
+    .tag.warn {
+      background: #fff7e8;
+      color: var(--amber);
+    }
+
+    .tag.error {
+      background: #fff1f0;
+      color: var(--red);
+    }
+
+    .log {
+      border-top: 1px solid var(--line);
+      background: #111827;
+      color: #d8e3dc;
+      min-height: 150px;
+      max-height: 230px;
+      overflow: auto;
+      padding: 14px 16px;
+      font-family: Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+
+    .empty {
+      color: var(--muted);
+      padding: 34px 16px;
+      text-align: center;
+    }
+
+    @media (max-width: 860px) {
+      .shell { width: min(100% - 20px, 720px); }
+      header { align-items: stretch; flex-direction: column; }
+      .layout { grid-template-columns: 1fr; }
+      .summary { grid-template-columns: 1fr; }
+      .metric { border-right: 0; border-bottom: 1px solid var(--line); }
+      .metric:last-child { border-bottom: 0; }
+      th, td { white-space: normal; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div>
+        <h1>Produto unico ZigPay</h1>
+      </div>
+      <div id="statusPill" class="status-pill">Pronto</div>
+    </header>
+
+    <section class="layout">
+      <form class="panel form" id="actionForm" autocomplete="off">
+        <div class="field">
+          <label for="uniqueFile">Planilha SKU</label>
+          <input id="uniqueFile" type="file" accept=".xlsx,.xlsm,.csv">
+        </div>
+
+        <div class="field">
+          <label for="uniqueRows">Produtos sem planilha</label>
+          <textarea id="uniqueRows" placeholder="23&#10;24&#10;25&#10;74737372832844"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="fiscalSource">Replicar fiscal e preco de</label>
+          <select id="fiscalSource"></select>
+        </div>
+
+        <div class="field">
+          <label for="fiscalGroup">Grupo fiscal reserva</label>
+          <select id="fiscalGroup"></select>
+        </div>
+
+        <div class="field">
+          <label>Fases</label>
+          <div id="uniqueSteps" class="sequence-list"></div>
+        </div>
+
+        <div class="field">
+          <div class="units-head">
+            <label id="unitsLabel">Unidades</label>
+            <button id="toggleAll" class="link-button" type="button">Selecionar todas</button>
+          </div>
+          <div id="units" class="units"></div>
+        </div>
+
+        <label class="unit">
+          <input id="headlessMode" type="checkbox">
+          <span>Modo invisivel</span>
+        </label>
+
+        <div class="actions">
+          <button id="runBtn" class="button primary" type="submit">
+            <span aria-hidden="true">&#9654;</span>
+            Atualizar precos
+          </button>
+          <a class="button secondary" href="/preview.html">Painel principal</a>
+        </div>
+      </form>
+
+      <section class="panel content">
+        <div class="summary">
+          <div class="metric">
+            <strong id="metricUnits">0</strong>
+            <span>Unidades</span>
+          </div>
+          <div class="metric">
+            <strong id="metricItems">0</strong>
+            <span>Itens</span>
+          </div>
+          <div class="metric">
+            <strong id="metricStatus">-</strong>
+            <span>Status</span>
+          </div>
+        </div>
+        <div id="result" class="result">
+          <div class="empty">Sem execucao</div>
+        </div>
+        <div id="log" class="log">Aguardando...</div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const state = {
+      stores: [],
+      fiscalGroups: [],
+      uniqueSteps: [
+        { id: "register_product", label: "Cadastrar produto", enabled: true },
+        { id: "activate_product", label: "Liberar produto", enabled: true },
+        { id: "adjust_fiscal", label: "Ajustar fiscal", enabled: true }
+      ],
+      polling: null
+    };
+
+    const el = {
+      form: document.getElementById("actionForm"),
+      units: document.getElementById("units"),
+      toggleAll: document.getElementById("toggleAll"),
+      runBtn: document.getElementById("runBtn"),
+      headlessMode: document.getElementById("headlessMode"),
+      uniqueFile: document.getElementById("uniqueFile"),
+      uniqueRows: document.getElementById("uniqueRows"),
+      fiscalSource: document.getElementById("fiscalSource"),
+      fiscalGroup: document.getElementById("fiscalGroup"),
+      uniqueSteps: document.getElementById("uniqueSteps"),
+      statusPill: document.getElementById("statusPill"),
+      result: document.getElementById("result"),
+      log: document.getElementById("log"),
+      metricUnits: document.getElementById("metricUnits"),
+      metricItems: document.getElementById("metricItems"),
+      metricStatus: document.getElementById("metricStatus")
+    };
+
+    function selectedIds() {
+      return [...document.querySelectorAll("input[name='unit']:checked")].map(input => input.value);
+    }
+
+    function selectedUniqueSteps() {
+      return state.uniqueSteps.filter(step => step.enabled).map(step => step.id);
+    }
+
+    function setBusy(isBusy) {
+      el.runBtn.disabled = isBusy;
+      el.statusPill.textContent = isBusy ? "Rodando" : "Pronto";
+    }
+
+    function updateMetrics(items = null, status = "-") {
+      el.metricUnits.textContent = selectedIds().length;
+      el.metricItems.textContent = items === null ? "0" : String(items);
+      el.metricStatus.textContent = status;
+    }
+
+    function money(cents) {
+      if (cents === null || cents === undefined || cents === "") return "-";
+      return (Number(cents) / 100).toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL"
+      });
+    }
+
+    function renderStores() {
+      el.units.innerHTML = state.stores.map(store => `
+        <label class="unit">
+          <input type="checkbox" name="unit" value="${store.id}">
+          <span>${store.name}</span>
+        </label>
+      `).join("");
+      updateMetrics();
+    }
+
+    function renderUniqueSteps() {
+      el.uniqueSteps.innerHTML = state.uniqueSteps.map((step, index) => `
+        <div class="sequence-item" data-step="${step.id}">
+          <label>
+            <input type="checkbox" name="unique-step" value="${step.id}" ${step.enabled ? "checked" : ""}>
+            <span>${index + 1}. ${step.label}</span>
+          </label>
+          <button class="mini-button" type="button" data-move="up" ${index === 0 ? "disabled" : ""}>Subir</button>
+          <button class="mini-button" type="button" data-move="down" ${index === state.uniqueSteps.length - 1 ? "disabled" : ""}>Descer</button>
+        </div>
+      `).join("");
+    }
+
+    function tag(status) {
+      const value = status || "-";
+      const ok = statusOk(value);
+      const warn = [
+        "NAO_ENCONTRADO",
+        "EH_MONTAVEL",
+        "ERRO_UNIDADE",
+        "PULADO",
+        "SEM_ORIGEM",
+        "SEM_NCM",
+        "PRECO_ATUALIZADO_FISCAL_PENDENTE"
+      ].includes(value);
+      const className = ok ? "tag" : warn ? "tag warn" : "tag error";
+      return `<span class="${className}">${value}</span>`;
+    }
+
+    function statusOk(status) {
+      return [
+        "ATUALIZADO",
+        "ATUALIZADO_PRECO_REPLICADO",
+        "ATUALIZADO_COM_FISCAL",
+        "IMPORTADO",
+        "JA_ESTAVA_OK"
+      ].includes(status || "");
+    }
+
+    function renderRows(rows) {
+      if (!rows || rows.length === 0) {
+        el.result.innerHTML = `<div class="empty">Sem dados</div>`;
+        updateMetrics(0, "-");
+        return;
+      }
+
+      el.result.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Unidade</th>
+              <th>SKU</th>
+              <th>Produto</th>
+              <th>Novo</th>
+              <th>Atual</th>
+              <th>Fiscal</th>
+              <th>Status</th>
+              <th>Mensagem</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(row => `
+              <tr>
+                <td>${row.unidade || row.store || ""}</td>
+                <td>${row.sku || String(row.name || "").replace("SKU #", "")}</td>
+                <td>${row.produto || ""}</td>
+                <td>${money(row.preco_planilha_centavos ?? row.expected_price)}</td>
+                <td>${money(row.preco_atual_centavos ?? row.api_price)}</td>
+                <td>${tag(row.fiscal_status || row.fiscal_atual || "-")}</td>
+                <td>${tag(row.status)}</td>
+                <td>${row.mensagem || ""}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      `;
+
+      const pending = rows.filter(row => !statusOk(row.status)).length;
+      updateMetrics(rows.length, pending ? `${pending} pend.` : "OK");
+    }
+
+    function renderDownloadLink(downloadUrl) {
+      if (!downloadUrl) return;
+      const url = new URL(downloadUrl, window.location.href).href;
+      el.result.innerHTML += `
+        <div class="actions">
+          <a class="button secondary" href="${url}" download>Baixar relatorio</a>
+        </div>
+      `;
+    }
+
+    function readFileAsBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = String(reader.result || "");
+          resolve(result.includes(",") ? result.split(",", 2)[1] : result);
+        };
+        reader.onerror = () => reject(reader.error || new Error("Falha ao ler arquivo"));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function payload() {
+      let uniqueFile = null;
+      if (el.uniqueFile.files.length) {
+        const file = el.uniqueFile.files[0];
+        uniqueFile = {
+          name: file.name,
+          content_base64: await readFileAsBase64(file)
+        };
+      }
+      return {
+        action: "unique_product_prices",
+        unit_ids: selectedIds(),
+        headless_mode: el.headlessMode.checked,
+        unique_rows: el.uniqueRows.value.trim(),
+        unique_file: uniqueFile,
+        fiscal_source: el.fiscalSource.value,
+        fiscal_group: el.fiscalGroup.value,
+        unique_steps: selectedUniqueSteps()
+      };
+    }
+
+    async function requestJson(url, options = {}) {
+      const response = await fetch(url, {
+        headers: { "Content-Type": "application/json" },
+        ...options
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Falha na requisicao");
+      return data;
+    }
+
+    async function startJob(event) {
+      event.preventDefault();
+      if (!selectedIds().length) {
+        el.log.textContent = "Selecione pelo menos uma unidade.";
+        el.metricStatus.textContent = "Erro";
+        return;
+      }
+      if (!el.uniqueFile.files.length && !el.uniqueRows.value.trim()) {
+        el.log.textContent = "Selecione uma planilha ou informe pelo menos o SKU.";
+        el.metricStatus.textContent = "Erro";
+        return;
+      }
+
+      setBusy(true);
+      el.log.textContent = "Criando tarefa...";
+      try {
+        const data = await requestJson("/api/jobs", {
+          method: "POST",
+          body: JSON.stringify(await payload())
+        });
+        pollJob(data.job_id);
+      } catch (error) {
+        el.log.textContent = error.message;
+        el.metricStatus.textContent = "Erro";
+        setBusy(false);
+      }
+    }
+
+    function pollJob(jobId) {
+      clearInterval(state.polling);
+      state.polling = setInterval(async () => {
+        try {
+          const job = await requestJson(`/api/jobs/${jobId}`);
+          el.log.textContent = (job.logs || []).join("\n") || "Rodando...";
+          el.metricStatus.textContent = job.status;
+          if (job.status === "done" || job.status === "error") {
+            clearInterval(state.polling);
+            setBusy(false);
+            const rows = job.result?.details?.rows || job.result?.rows || [];
+            renderRows(rows);
+            if (job.result?.download_url) renderDownloadLink(job.result.download_url);
+            el.statusPill.textContent = job.error ? "Erro" : "Finalizado";
+            if (job.result?.message) el.log.textContent += `\n${job.result.message}`;
+            if (job.result?.download_url) {
+              const url = new URL(job.result.download_url, window.location.href).href;
+              el.log.textContent += `\nRelatorio: ${url}`;
+            }
+          }
+        } catch (error) {
+          clearInterval(state.polling);
+          setBusy(false);
+          el.log.textContent = error.message;
+          el.metricStatus.textContent = "Erro";
+        }
+      }, 900);
+    }
+
+    async function init() {
+      const data = await requestJson("/api/stores");
+      state.stores = data.stores || [];
+      renderStores();
+      renderUniqueSteps();
+      el.fiscalSource.innerHTML = state.stores.map(store => `<option value="${store.name}">${store.name}</option>`).join("");
+      const tijuca = [...el.fiscalSource.options].find(option => option.textContent.toUpperCase().includes("TIJUCA"));
+      if (tijuca) el.fiscalSource.value = tijuca.value;
+      const options = await requestJson("/api/product-generator/options");
+      state.fiscalGroups = options.fiscal_groups || [];
+      el.fiscalGroup.innerHTML = state.fiscalGroups.map(item => `<option value="${item}">${item}</option>`).join("");
+    }
+
+    el.units.addEventListener("change", () => updateMetrics());
+    el.toggleAll.addEventListener("click", () => {
+      const boxes = [...document.querySelectorAll("input[name='unit']")];
+      const shouldCheck = boxes.some(box => !box.checked);
+      boxes.forEach(box => { box.checked = shouldCheck; });
+      el.toggleAll.textContent = shouldCheck ? "Limpar selecao" : "Selecionar todas";
+      updateMetrics();
+    });
+    el.uniqueSteps.addEventListener("change", event => {
+      if (event.target.name !== "unique-step") return;
+      const step = state.uniqueSteps.find(item => item.id === event.target.value);
+      if (step) step.enabled = event.target.checked;
+    });
+    el.uniqueSteps.addEventListener("click", event => {
+      const button = event.target.closest("button[data-move]");
+      if (!button) return;
+      const item = button.closest(".sequence-item");
+      const index = state.uniqueSteps.findIndex(step => step.id === item.dataset.step);
+      const nextIndex = button.dataset.move === "up" ? index - 1 : index + 1;
+      if (index < 0 || nextIndex < 0 || nextIndex >= state.uniqueSteps.length) return;
+      const [step] = state.uniqueSteps.splice(index, 1);
+      state.uniqueSteps.splice(nextIndex, 0, step);
+      renderUniqueSteps();
+    });
+    el.form.addEventListener("submit", startJob);
+
+    init().catch(error => {
+      el.log.textContent = error.message;
+      el.metricStatus.textContent = "Erro";
+    });
+  </script>
+</body>
+</html>

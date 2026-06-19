@@ -1,0 +1,17 @@
+.env
+*.log
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.venv/
+venv/
+env/
+*.json
+!lojas.json
+EXPORTACOES_ZIGPAY/
+*.xlsx
+*.png
+*.jpg
+*.jpeg

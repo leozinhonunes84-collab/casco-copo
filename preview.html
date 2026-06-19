@@ -1,0 +1,1176 @@
+﻿<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ZigPay Local</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f4;
+      --panel: #ffffff;
+      --line: #d9ddd2;
+      --text: #16201b;
+      --muted: #657167;
+      --green: #16704a;
+      --green-dark: #0f5136;
+      --amber: #b7791f;
+      --red: #b42318;
+      --blue: #245b9e;
+      --shadow: 0 16px 45px rgba(17, 24, 39, .08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      background:
+        linear-gradient(180deg, rgba(22, 112, 74, .10), transparent 260px),
+        var(--bg);
+      color: var(--text);
+    }
+
+    .shell {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 40px;
+    }
+
+    header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 22px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 30px;
+      line-height: 1.12;
+      letter-spacing: 0;
+    }
+
+    .status-pill {
+      min-width: 160px;
+      padding: 10px 13px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .72);
+      color: var(--muted);
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 18px;
+    }
+
+    .tab {
+      appearance: none;
+      border: 0;
+      border-bottom: 3px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      padding: 12px 14px;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 700;
+    }
+
+    .tab.active {
+      color: var(--green-dark);
+      border-bottom-color: var(--green);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(320px, 420px) 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .form {
+      padding: 18px;
+    }
+
+    label {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 7px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    textarea,
+    select {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 0 12px;
+      color: var(--text);
+      font: inherit;
+      outline: none;
+      background: #fff;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    textarea:focus,
+    select:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(22, 112, 74, .14);
+    }
+
+    textarea {
+      min-height: 110px;
+      padding: 10px 12px;
+      resize: vertical;
+    }
+
+    .field { margin-bottom: 16px; }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .manual-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .manual-grid label {
+      font-size: 12px;
+      margin-bottom: 5px;
+    }
+
+    .manual-grid input {
+      min-height: 38px;
+      padding: 0 9px;
+    }
+
+    .multi-select {
+      min-height: 142px;
+      padding: 8px;
+      font-size: 13px;
+    }
+
+    .sequence-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .sequence-item {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 8px;
+      align-items: center;
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 8px;
+      background: #fbfcfa;
+    }
+
+    .sequence-item label {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin: 0;
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .sequence-item input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--green);
+    }
+
+    .mini-button {
+      appearance: none;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      min-width: 34px;
+      min-height: 32px;
+      padding: 0 8px;
+      background: #fff;
+      color: var(--green-dark);
+      cursor: pointer;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .mini-button:disabled {
+      cursor: not-allowed;
+      opacity: .45;
+    }
+
+    .units-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .link-button {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--blue);
+      cursor: pointer;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 0;
+    }
+
+    .units {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 7px;
+      max-height: 330px;
+      overflow: auto;
+      padding-right: 2px;
+    }
+
+    .unit {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 8px 10px;
+      background: #fbfcfa;
+      color: var(--text);
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .unit input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--green);
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+
+    .button {
+      appearance: none;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      min-height: 42px;
+      padding: 0 14px;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .button.primary {
+      background: var(--green);
+      color: #fff;
+    }
+
+    .button.secondary {
+      background: #fff;
+      color: var(--green-dark);
+      border-color: var(--line);
+    }
+
+    .toggle-button {
+      justify-content: flex-start;
+    }
+
+    .toggle-button.active {
+      background: #edf5ef;
+      border-color: var(--green);
+      color: var(--green-dark);
+    }
+
+    .button:disabled {
+      cursor: not-allowed;
+      opacity: .62;
+    }
+
+    .content {
+      min-height: 520px;
+      overflow: hidden;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      border-bottom: 1px solid var(--line);
+    }
+
+    .metric {
+      padding: 16px;
+      border-right: 1px solid var(--line);
+    }
+
+    .metric:last-child { border-right: 0; }
+
+    .metric strong {
+      display: block;
+      font-size: 24px;
+      line-height: 1.1;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .result {
+      padding: 16px;
+      overflow: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 8px;
+      text-align: left;
+      vertical-align: top;
+      white-space: nowrap;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 12px;
+      background: #fbfcfa;
+      position: sticky;
+      top: 0;
+    }
+
+    .tag {
+      display: inline-flex;
+      min-height: 24px;
+      align-items: center;
+      border-radius: 999px;
+      padding: 0 9px;
+      font-weight: 700;
+      font-size: 12px;
+      background: #edf4ef;
+      color: var(--green-dark);
+    }
+
+    .tag.warn {
+      background: #fff7e8;
+      color: var(--amber);
+    }
+
+    .tag.error {
+      background: #fff1f0;
+      color: var(--red);
+    }
+
+    .log {
+      border-top: 1px solid var(--line);
+      background: #111827;
+      color: #d8e3dc;
+      min-height: 150px;
+      max-height: 230px;
+      overflow: auto;
+      padding: 14px 16px;
+      font-family: Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+
+    .empty {
+      color: var(--muted);
+      padding: 34px 16px;
+      text-align: center;
+    }
+
+    .hidden { display: none; }
+
+    @media (max-width: 860px) {
+      .shell { width: min(100% - 20px, 720px); }
+      header { align-items: stretch; flex-direction: column; }
+      .layout { grid-template-columns: 1fr; }
+      .summary { grid-template-columns: 1fr; }
+      .metric { border-right: 0; border-bottom: 1px solid var(--line); }
+      .metric:last-child { border-bottom: 0; }
+      th, td { white-space: normal; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div>
+        <h1>ZigPay Local</h1>
+      </div>
+      <div class="header-actions">
+        <a class="button secondary" href="/item-alteracao.html">Item de alteracao</a>
+        <a class="button secondary" href="/produto-unico.html">Produto unico</a>
+        <div id="statusPill" class="status-pill">Pronto</div>
+      </div>
+    </header>
+
+    <nav class="tabs" aria-label="Modos">
+      <button class="tab active" data-tab="price" type="button">Ajuste de preco</button>
+      <button class="tab" data-tab="mountable" type="button">Cadastro montavel</button>
+      <button class="tab" data-tab="release" type="button">Liberar chope novo</button>
+      <button class="tab" data-tab="generator" type="button">Gerador produtos</button>
+      <button class="tab" data-tab="fiscal" type="button">Replicar fiscal</button>
+      <button class="tab" data-tab="sequence" type="button">Fluxo completo</button>
+    </nav>
+
+    <section class="layout">
+      <form class="panel form" id="actionForm" autocomplete="off">
+        <div class="field" id="productField">
+          <label for="product">Chope</label>
+          <input id="product" name="product" type="text" autocomplete="off" placeholder="NOME DO CHOPE">
+        </div>
+
+        <div class="field" id="unitField">
+          <div class="units-head">
+            <label id="unitsLabel">Unidades</label>
+            <button id="toggleAll" class="link-button" type="button">Selecionar todas</button>
+          </div>
+          <div id="units" class="units"></div>
+        </div>
+
+        <div class="actions">
+          <button id="previewBtn" class="button secondary" type="button">
+            <span aria-hidden="true">â†º</span>
+            Prever valores
+          </button>
+          <button id="runBtn" class="button primary" type="submit">
+            <span aria-hidden="true">â–¶</span>
+            Rodar ajuste
+          </button>
+        </div>
+        <label class="unit hidden" id="dryRunWrap">
+          <input id="dryRun" type="checkbox" checked>
+          <span id="dryRunText">Modo teste sem salvar</span>
+        </label>
+        <label class="unit" id="headlessWrap">
+          <input id="headlessMode" type="checkbox">
+          <span>Modo invisivel</span>
+        </label>
+
+        <div id="preciseSkuFields">
+          <label class="unit">
+            <input id="preciseSkuEnabled" type="checkbox">
+            <span>Busca precisa por SKU</span>
+          </label>
+          <div id="preciseSkuInputs" class="field hidden">
+            <label>Use somente quando existirem produtos com nomes semelhantes</label>
+            <div class="manual-grid">
+              <div>
+                <label for="preciseSkuMain">Principal</label>
+                <input id="preciseSkuMain" type="text" placeholder="SKU">
+              </div>
+              <div>
+                <label for="preciseSkuRegua">REGUA</label>
+                <input id="preciseSkuRegua" type="text" placeholder="SKU">
+              </div>
+              <div>
+                <label for="preciseSkuP">P</label>
+                <input id="preciseSkuP" type="text" placeholder="SKU">
+              </div>
+              <div>
+                <label for="preciseSkuG">G</label>
+                <input id="preciseSkuG" type="text" placeholder="SKU">
+              </div>
+              <div>
+                <label for="preciseSku1L">1L</label>
+                <input id="preciseSku1L" type="text" placeholder="SKU">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="manualPriceFields" class="hidden">
+          <label class="unit">
+            <input id="manualPriceEnabled" type="checkbox">
+            <span>Ajuste manual</span>
+          </label>
+          <div id="manualPriceInputs" class="field hidden">
+            <label>Precos manuais</label>
+            <div class="manual-grid">
+              <div>
+                <label for="manualRegua">REGUA</label>
+                <input id="manualRegua" type="text" inputmode="decimal" placeholder="0,00">
+              </div>
+              <div>
+                <label for="manualP">P</label>
+                <input id="manualP" type="text" inputmode="decimal" placeholder="0,00">
+              </div>
+              <div>
+                <label for="manualG">G</label>
+                <input id="manualG" type="text" inputmode="decimal" placeholder="0,00">
+              </div>
+              <div>
+                <label for="manual1L">1L</label>
+                <input id="manual1L" type="text" inputmode="decimal" placeholder="0,00">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="alterationFields" class="hidden">
+          <div class="field">
+            <label for="alterationFile">Planilha de SKUs</label>
+            <input id="alterationFile" type="file" accept=".xlsx,.xlsm,.csv">
+          </div>
+          <div class="field">
+            <label for="alterationCodes">SKUs sem planilha</label>
+            <textarea id="alterationCodes" placeholder="1906&#10;1907&#10;1908"></textarea>
+          </div>
+        </div>
+
+        <div id="generatorFields" class="hidden">
+          <div class="field" id="generatorModeField">
+            <label for="generatorMode">Tipo</label>
+            <select id="generatorMode">
+              <option value="new">Produto novo</option>
+              <option value="existing">Produto existente</option>
+            </select>
+          </div>
+
+          <div id="newProductFields">
+            <div class="field-row">
+              <div class="field">
+                <label for="skuStart">SKU inicial</label>
+                <input id="skuStart" type="number" min="0" step="1" placeholder="SKU">
+              </div>
+              <div class="field">
+                <label for="skuSkip">Pular</label>
+                <select id="skuSkip">
+                  <option value="0">0</option>
+                  <option value="1">+1</option>
+                  <option value="5">+5</option>
+                  <option value="10">+10</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div id="existingProductFields" class="hidden">
+            <div class="field">
+              <button id="loadExistingBtn" class="button secondary" type="button">
+                <span aria-hidden="true">â†º</span>
+                Buscar existentes
+              </button>
+            </div>
+            <div class="field">
+              <label for="existingProducts">Resultados</label>
+              <select id="existingProducts" class="multi-select" multiple></select>
+            </div>
+          </div>
+
+          <div class="field" id="generatorLocalField">
+            <label for="generatorLocal" id="generatorLocalLabel">Local</label>
+            <select id="generatorLocal"></select>
+          </div>
+
+          <div class="field" id="fiscalGroupField">
+            <label for="fiscalGroup">Grupo fiscal</label>
+            <select id="fiscalGroup"></select>
+          </div>
+        </div>
+
+        <div id="sequenceFields" class="hidden">
+          <div class="field">
+            <label>Sequencia</label>
+            <div id="sequenceSteps" class="sequence-list"></div>
+          </div>
+        </div>
+      </form>
+
+      <section class="panel content">
+        <div class="summary">
+          <div class="metric">
+            <strong id="metricUnits">0</strong>
+            <span>Unidades</span>
+          </div>
+          <div class="metric">
+            <strong id="metricItems">0</strong>
+            <span>Itens</span>
+          </div>
+          <div class="metric">
+            <strong id="metricStatus">-</strong>
+            <span>Status</span>
+          </div>
+        </div>
+        <div id="result" class="result">
+          <div class="empty">Sem execucao</div>
+        </div>
+        <div id="log" class="log">Aguardando...</div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const state = {
+      stores: [],
+      activeTab: "price",
+      polling: null,
+      productSearchTimer: null,
+      sequenceSteps: [
+        { id: "generate_product", label: "Cadastrar produto", enabled: true },
+        { id: "release_beer", label: "Liberar chope", enabled: true },
+        { id: "replicate_fiscal", label: "Ajustar fiscal", enabled: true },
+        { id: "mountable", label: "Cadastrar montavel", enabled: true }
+      ]
+    };
+
+    const el = {
+      tabs: document.querySelectorAll(".tab"),
+      form: document.getElementById("actionForm"),
+      product: document.getElementById("product"),
+      units: document.getElementById("units"),
+      unitsLabel: document.getElementById("unitsLabel"),
+      toggleAll: document.getElementById("toggleAll"),
+      previewBtn: document.getElementById("previewBtn"),
+      runBtn: document.getElementById("runBtn"),
+      dryRun: document.getElementById("dryRun"),
+      dryRunText: document.getElementById("dryRunText"),
+      headlessMode: document.getElementById("headlessMode"),
+      preciseSkuFields: document.getElementById("preciseSkuFields"),
+      preciseSkuEnabled: document.getElementById("preciseSkuEnabled"),
+      preciseSkuInputs: document.getElementById("preciseSkuInputs"),
+      preciseSkuMain: document.getElementById("preciseSkuMain"),
+      preciseSkuRegua: document.getElementById("preciseSkuRegua"),
+      preciseSkuP: document.getElementById("preciseSkuP"),
+      preciseSkuG: document.getElementById("preciseSkuG"),
+      preciseSku1L: document.getElementById("preciseSku1L"),
+      manualPriceFields: document.getElementById("manualPriceFields"),
+      manualPriceEnabled: document.getElementById("manualPriceEnabled"),
+      manualPriceInputs: document.getElementById("manualPriceInputs"),
+      manualRegua: document.getElementById("manualRegua"),
+      manualP: document.getElementById("manualP"),
+      manualG: document.getElementById("manualG"),
+      manual1L: document.getElementById("manual1L"),
+      unitField: document.getElementById("unitField"),
+      productField: document.getElementById("productField"),
+      generatorFields: document.getElementById("generatorFields"),
+      generatorModeField: document.getElementById("generatorModeField"),
+      generatorMode: document.getElementById("generatorMode"),
+      newProductFields: document.getElementById("newProductFields"),
+      existingProductFields: document.getElementById("existingProductFields"),
+      skuStart: document.getElementById("skuStart"),
+      skuSkip: document.getElementById("skuSkip"),
+      generatorLocalLabel: document.getElementById("generatorLocalLabel"),
+      generatorLocal: document.getElementById("generatorLocal"),
+      fiscalGroup: document.getElementById("fiscalGroup"),
+      fiscalGroupField: document.getElementById("fiscalGroupField"),
+      alterationFields: document.getElementById("alterationFields"),
+      alterationFile: document.getElementById("alterationFile"),
+      alterationCodes: document.getElementById("alterationCodes"),
+      sequenceFields: document.getElementById("sequenceFields"),
+      sequenceSteps: document.getElementById("sequenceSteps"),
+      loadExistingBtn: document.getElementById("loadExistingBtn"),
+      existingProducts: document.getElementById("existingProducts"),
+      statusPill: document.getElementById("statusPill"),
+      result: document.getElementById("result"),
+      log: document.getElementById("log"),
+      metricUnits: document.getElementById("metricUnits"),
+      metricItems: document.getElementById("metricItems"),
+      metricStatus: document.getElementById("metricStatus")
+    };
+
+    function money(cents) {
+      if (cents === null || cents === undefined || cents === "") return "-";
+      return (Number(cents) / 100).toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL"
+      });
+    }
+
+    function centsFromManual(value) {
+      const text = String(value || "").trim().replace("R$", "").replace(/\s/g, "");
+      if (!text) throw new Error("Informe todos os precos manuais");
+      const normalized = text.includes(",") ? text.replace(/\./g, "").replace(",", ".") : text;
+      const amount = Number(normalized);
+      if (!Number.isFinite(amount) || amount < 0) throw new Error(`Preco manual invalido: ${value}`);
+      return Math.round(amount * 100);
+    }
+
+    function selectedIds() {
+      return [...document.querySelectorAll("input[name='unit']:checked")].map(input => input.value);
+    }
+
+    function selectedSequenceSteps() {
+      return state.sequenceSteps.filter(step => step.enabled).map(step => step.id);
+    }
+
+    function setBusy(isBusy) {
+      el.previewBtn.disabled = isBusy;
+      el.runBtn.disabled = isBusy;
+      el.statusPill.textContent = isBusy ? "Rodando" : "Pronto";
+    }
+
+    function renderStores() {
+      el.units.innerHTML = state.stores.map(store => `
+        <label class="unit">
+          <input type="checkbox" name="unit" value="${store.id}">
+          <span>${store.name}</span>
+        </label>
+      `).join("");
+      updateMetrics();
+    }
+
+    function renderSequenceSteps() {
+      el.sequenceSteps.innerHTML = state.sequenceSteps.map((step, index) => `
+        <div class="sequence-item" data-step="${step.id}">
+          <label>
+            <input type="checkbox" name="sequence-step" value="${step.id}" ${step.enabled ? "checked" : ""}>
+            <span>${index + 1}. ${step.label}</span>
+          </label>
+          <button class="mini-button" type="button" data-move="up" ${index === 0 ? "disabled" : ""}>Subir</button>
+          <button class="mini-button" type="button" data-move="down" ${index === state.sequenceSteps.length - 1 ? "disabled" : ""}>Descer</button>
+        </div>
+      `).join("");
+    }
+
+    function updateGeneratorMode() {
+      const fiscalTab = state.activeTab === "fiscal";
+      const existing = el.generatorMode.value === "existing";
+      el.generatorModeField.classList.toggle("hidden", fiscalTab);
+      el.newProductFields.classList.toggle("hidden", fiscalTab || existing);
+      el.existingProductFields.classList.toggle("hidden", fiscalTab || !existing);
+      if (!fiscalTab && existing) {
+        loadExistingProducts();
+      }
+    }
+
+    function updateMetrics(items = null, status = "-") {
+      el.metricUnits.textContent = selectedIds().length;
+      el.metricItems.textContent = items === null ? "0" : String(items);
+      el.metricStatus.textContent = status;
+    }
+
+    function rowsFromPreview(groups) {
+      const rows = [];
+      for (const group of groups) {
+        for (const price of group.prices || []) {
+          rows.push({
+            store: group.store_name,
+            name: price.name,
+            expected_price: price.price,
+            api_price: "",
+            status: "PLANILHA"
+          });
+        }
+      }
+      return rows;
+    }
+
+    function rowsFromManualPrices() {
+      const product = el.product.value.trim().toUpperCase();
+      const prices = [
+        { suffix: "REGUA", value: centsFromManual(el.manualRegua.value) },
+        { suffix: "P", value: centsFromManual(el.manualP.value) },
+        { suffix: "G", value: centsFromManual(el.manualG.value) },
+        { suffix: "1L", value: centsFromManual(el.manual1L.value) }
+      ];
+      const selectedStores = state.stores.filter(store => selectedIds().includes(String(store.id)));
+      return selectedStores.flatMap(store => prices.map(price => ({
+        store: store.name,
+        name: `${product} ${price.suffix}`,
+        expected_price: price.value,
+        api_price: "",
+        status: "MANUAL"
+      })));
+    }
+
+    function tag(status) {
+      const value = status || "-";
+      const successStatuses = ["OK", "PLANILHA", "MANUAL", "GERADO", "TESTE_OK", "MARCADO", "JA_MARCADO"];
+      const className = successStatuses.includes(value) ? "tag" :
+        value.includes("PENDENTE") ? "tag warn" : "tag error";
+      return `<span class="${className}">${value}</span>`;
+    }
+
+    function renderRows(rows) {
+      if (!rows || rows.length === 0) {
+        el.result.innerHTML = `<div class="empty">Sem dados</div>`;
+        updateMetrics(0, "-");
+        return;
+      }
+      el.result.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Unidade</th>
+              <th>Item</th>
+              <th>Planilha</th>
+              <th>Atual</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(row => `
+              <tr>
+                <td>${row.store || ""}</td>
+                <td>${row.name || ""}</td>
+                <td>${money(row.expected_price)}</td>
+                <td>${money(row.api_price)}</td>
+                <td>${tag(row.status)}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      `;
+      const okStatuses = ["OK", "PLANILHA", "MANUAL", "GERADO", "TESTE_OK", "MARCADO", "JA_MARCADO"];
+      const bad = rows.filter(row => row.status && !okStatuses.includes(row.status)).length;
+      updateMetrics(rows.length, bad ? `${bad} pend.` : "OK");
+    }
+
+    function renderDownloadLink(downloadUrl) {
+      if (!downloadUrl) return;
+      const url = new URL(downloadUrl, window.location.href).href;
+      el.result.innerHTML += `
+        <div class="actions">
+          <a class="button secondary" href="${url}" download>Baixar relatorio</a>
+        </div>
+      `;
+    }
+
+    function readFileAsBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = String(reader.result || "");
+          resolve(result.includes(",") ? result.split(",", 2)[1] : result);
+        };
+        reader.onerror = () => reject(reader.error || new Error("Falha ao ler arquivo"));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function payload(action = null) {
+      let alterationFile = null;
+      if (state.activeTab === "alteration" && el.alterationFile.files.length) {
+        const file = el.alterationFile.files[0];
+        alterationFile = {
+          name: file.name,
+          content_base64: await readFileAsBase64(file)
+        };
+      }
+      return {
+        action,
+        product: el.product.value.trim(),
+        unit_ids: selectedIds(),
+        dry_run: el.dryRun.checked,
+        headless_mode: el.headlessMode.checked,
+        precise_sku_enabled: el.preciseSkuEnabled.checked && !el.preciseSkuFields.classList.contains("hidden"),
+        precise_skus: {
+          MAIN: el.preciseSkuMain.value.trim(),
+          REGUA: el.preciseSkuRegua.value.trim(),
+          P: el.preciseSkuP.value.trim(),
+          G: el.preciseSkuG.value.trim(),
+          "1L": el.preciseSku1L.value.trim()
+        },
+        manual_price_enabled: el.manualPriceEnabled.checked && !el.manualPriceFields.classList.contains("hidden"),
+        manual_prices: {
+          REGUA: el.manualRegua.value.trim(),
+          P: el.manualP.value.trim(),
+          G: el.manualG.value.trim(),
+          "1L": el.manual1L.value.trim()
+        },
+        generator_mode: el.generatorMode.value,
+        sku_start: el.skuStart.value.trim(),
+        sku_skip: Number(el.skuSkip.value || 0),
+        generator_local: el.generatorLocal.value,
+        fiscal_group: el.fiscalGroup.value,
+        alteration_codes: el.alterationCodes.value.trim(),
+        alteration_file: alterationFile,
+        replicate_fiscal: state.activeTab === "generator" || state.activeTab === "fiscal",
+        sequence_steps: selectedSequenceSteps(),
+        selected_products: [...el.existingProducts.selectedOptions].slice(0, 5).map(option => ({
+          sku: option.dataset.sku,
+          name: option.dataset.name
+        }))
+      };
+    }
+
+    async function requestJson(url, options = {}) {
+      const response = await fetch(url, {
+        headers: { "Content-Type": "application/json" },
+        ...options
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Falha na requisicao");
+      return data;
+    }
+
+    async function previewPrices() {
+      setBusy(true);
+      el.log.textContent = "Lendo planilha...";
+      try {
+        if (el.manualPriceEnabled.checked && !el.manualPriceFields.classList.contains("hidden")) {
+          renderRows(rowsFromManualPrices());
+          el.log.textContent = "Previsao manual concluida.";
+          return;
+        }
+        const data = await requestJson("/api/preview-prices", {
+          method: "POST",
+          body: JSON.stringify(await payload())
+        });
+        renderRows(rowsFromPreview(data.rows));
+        el.log.textContent = "Previsao concluida.";
+      } catch (error) {
+        el.log.textContent = error.message;
+        el.metricStatus.textContent = "Erro";
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function startJob(event) {
+      event.preventDefault();
+      const action = state.activeTab === "price"
+        ? "price_adjust_dashboard"
+        : state.activeTab === "mountable"
+          ? "mountable_dashboard"
+          : state.activeTab === "release"
+            ? "release_beer_dashboard"
+          : state.activeTab === "fiscal"
+            ? "replicate_fiscal_excel"
+            : state.activeTab === "alteration"
+              ? "flag_alteration_items"
+              : state.activeTab === "sequence"
+                ? "product_full_sequence"
+                : "generate_product_excel";
+      if (state.activeTab === "generator" && el.generatorMode.value === "existing" && el.existingProducts.selectedOptions.length === 0) {
+        el.log.textContent = "Selecione pelo menos 1 produto em Resultados antes de gerar.";
+        el.metricStatus.textContent = "Erro";
+        return;
+      }
+      setBusy(true);
+      el.log.textContent = "Criando tarefa...";
+      try {
+        const data = await requestJson("/api/jobs", {
+          method: "POST",
+          body: JSON.stringify(await payload(action))
+        });
+        pollJob(data.job_id);
+      } catch (error) {
+        el.log.textContent = error.message;
+        el.metricStatus.textContent = "Erro";
+        setBusy(false);
+      }
+    }
+
+    async function pollJob(jobId) {
+      clearInterval(state.polling);
+      state.polling = setInterval(async () => {
+        try {
+          const job = await requestJson(`/api/jobs/${jobId}`);
+          el.log.textContent = (job.logs || []).join("\n") || "Rodando...";
+          el.metricStatus.textContent = job.status;
+          if (job.status === "done" || job.status === "error") {
+            clearInterval(state.polling);
+            setBusy(false);
+            if (job.result && job.result.rows) renderRows(job.result.rows);
+            if (job.result && job.result.download_url) renderDownloadLink(job.result.download_url);
+            if (job.error) el.statusPill.textContent = "Erro";
+            else el.statusPill.textContent = "Finalizado";
+            if (job.result && job.result.message) {
+              el.log.textContent += `\n${job.result.message}`;
+            }
+            if (job.result && job.result.download_url) {
+              const url = new URL(job.result.download_url, window.location.href).href;
+              el.log.textContent += `\nRelatorio: ${url}`;
+            }
+          }
+        } catch (error) {
+          clearInterval(state.polling);
+          setBusy(false);
+          el.log.textContent = error.message;
+          el.metricStatus.textContent = "Erro";
+        }
+      }, 900);
+    }
+
+    function switchTab(tab) {
+      state.activeTab = tab;
+      el.tabs.forEach(button => button.classList.toggle("active", button.dataset.tab === tab));
+      const dryRunWrap = document.getElementById("dryRunWrap");
+      const generatorTab = tab === "generator";
+      const fiscalTab = tab === "fiscal";
+      const alterationTab = tab === "alteration";
+      const sequenceTab = tab === "sequence";
+      const manualPriceTab = tab === "price" || tab === "mountable" || sequenceTab;
+      const productGeneratorTab = generatorTab || fiscalTab || sequenceTab;
+      const preciseSkuTab = tab === "price" || tab === "mountable" || tab === "fiscal";
+      if (sequenceTab) el.dryRun.checked = false;
+      dryRunWrap.classList.toggle("hidden", tab !== "release" && tab !== "sequence");
+      el.dryRunText.textContent = sequenceTab ? "Modo teste na liberacao" : "Modo teste sem salvar";
+      el.manualPriceFields.classList.toggle("hidden", !manualPriceTab);
+      el.manualPriceInputs.classList.toggle("hidden", !manualPriceTab || !el.manualPriceEnabled.checked);
+      el.preciseSkuFields.classList.toggle("hidden", !preciseSkuTab);
+      el.preciseSkuInputs.classList.toggle("hidden", !preciseSkuTab || !el.preciseSkuEnabled.checked);
+      el.productField.classList.toggle("hidden", alterationTab);
+      el.unitField.classList.toggle("hidden", generatorTab);
+      el.generatorFields.classList.toggle("hidden", !productGeneratorTab);
+      el.alterationFields.classList.toggle("hidden", !alterationTab);
+      el.sequenceFields.classList.toggle("hidden", !sequenceTab);
+      el.fiscalGroupField.classList.toggle("hidden", !productGeneratorTab);
+      el.unitsLabel.textContent = fiscalTab ? "Unidades de destino" : sequenceTab ? "Unidades do fluxo" : "Unidades";
+      el.generatorLocalLabel.textContent = fiscalTab ? "Copiar fiscal de" : sequenceTab ? "Local base" : "Local";
+      el.previewBtn.classList.toggle("hidden", tab === "release" || productGeneratorTab || alterationTab);
+      el.runBtn.innerHTML = tab === "price"
+        ? `<span aria-hidden="true">&#9654;</span> Rodar ajuste`
+        : tab === "mountable"
+          ? `<span aria-hidden="true">&#9654;</span> Cadastrar montavel`
+          : tab === "release"
+            ? `<span aria-hidden="true">&#9654;</span> Testar liberacao`
+            : tab === "fiscal"
+              ? `<span aria-hidden="true">&#9654;</span> Importar fiscal`
+              : tab === "alteration"
+                ? `<span aria-hidden="true">&#9654;</span> Importar SKUs`
+                : tab === "sequence"
+                  ? `<span aria-hidden="true">&#9654;</span> Rodar fluxo`
+                  : `<span aria-hidden="true">&#9654;</span> Gerar e importar`;
+      el.result.innerHTML = `<div class="empty">Sem execucao</div>`;
+      el.log.textContent = "Aguardando...";
+      updateGeneratorMode();
+      updateMetrics();
+    }
+
+    async function init() {
+      const data = await requestJson("/api/stores");
+      state.stores = data.stores || [];
+      renderStores();
+      const generatorOptions = await requestJson("/api/product-generator/options");
+      el.generatorLocal.innerHTML = (generatorOptions.locals || []).map(item => `<option value="${item}">${item}</option>`).join("");
+      el.fiscalGroup.innerHTML = (generatorOptions.fiscal_groups || []).map(item => `<option value="${item}">${item}</option>`).join("");
+      renderSequenceSteps();
+    }
+
+    async function loadExistingProducts() {
+      const query = el.product.value.trim();
+      el.existingProducts.innerHTML = `<option disabled>Buscando...</option>`;
+      el.log.textContent = "Buscando produtos existentes...";
+      try {
+        const data = await requestJson(`/api/product-generator/products?q=${encodeURIComponent(query)}`);
+        const products = data.products || [];
+        if (products.length === 0) {
+          el.existingProducts.innerHTML = `<option disabled>Nenhum produto encontrado</option>`;
+          el.log.textContent = "Nenhum produto encontrado na base.";
+          return;
+        }
+        el.existingProducts.innerHTML = products.map(product => `
+          <option value="${product.sku}" data-sku="${product.sku}" data-name="${product.name}">
+            ${product.name} [SKU: ${product.sku}]
+          </option>
+        `).join("");
+        el.log.textContent = `${products.length} produto(s) encontrado(s). Selecione ate 5 em Resultados.`;
+      } catch (error) {
+        el.existingProducts.innerHTML = `<option disabled>Erro ao carregar base</option>`;
+        el.log.textContent = error.message;
+        el.metricStatus.textContent = "Erro";
+      }
+    }
+
+    el.tabs.forEach(button => {
+      button.addEventListener("click", () => switchTab(button.dataset.tab));
+    });
+
+    el.units.addEventListener("change", () => updateMetrics());
+
+    el.toggleAll.addEventListener("click", () => {
+      const boxes = [...document.querySelectorAll("input[name='unit']")];
+      const shouldCheck = boxes.some(box => !box.checked);
+      boxes.forEach(box => { box.checked = shouldCheck; });
+      el.toggleAll.textContent = shouldCheck ? "Limpar selecao" : "Selecionar todas";
+      updateMetrics();
+    });
+
+    el.previewBtn.addEventListener("click", previewPrices);
+    el.form.addEventListener("submit", startJob);
+    el.generatorMode.addEventListener("change", updateGeneratorMode);
+    el.loadExistingBtn.addEventListener("click", loadExistingProducts);
+    el.product.addEventListener("input", () => {
+      clearTimeout(state.productSearchTimer);
+      if (state.activeTab !== "generator" || el.generatorMode.value !== "existing") return;
+      state.productSearchTimer = setTimeout(loadExistingProducts, 450);
+    });
+    el.manualPriceEnabled.addEventListener("change", () => {
+      el.manualPriceInputs.classList.toggle("hidden", !el.manualPriceEnabled.checked);
+    });
+    el.preciseSkuEnabled.addEventListener("change", () => {
+      el.preciseSkuInputs.classList.toggle("hidden", !el.preciseSkuEnabled.checked);
+    });
+    el.sequenceSteps.addEventListener("change", event => {
+      if (event.target.name !== "sequence-step") return;
+      const step = state.sequenceSteps.find(item => item.id === event.target.value);
+      if (step) step.enabled = event.target.checked;
+      updateMetrics(selectedSequenceSteps().length, "-");
+    });
+    el.sequenceSteps.addEventListener("click", event => {
+      const button = event.target.closest("button[data-move]");
+      if (!button) return;
+      const item = button.closest(".sequence-item");
+      const index = state.sequenceSteps.findIndex(step => step.id === item.dataset.step);
+      const direction = button.dataset.move === "up" ? -1 : 1;
+      const nextIndex = index + direction;
+      if (index < 0 || nextIndex < 0 || nextIndex >= state.sequenceSteps.length) return;
+      const [step] = state.sequenceSteps.splice(index, 1);
+      state.sequenceSteps.splice(nextIndex, 0, step);
+      renderSequenceSteps();
+    });
+
+    init().catch(error => {
+      el.log.textContent = error.message;
+      el.metricStatus.textContent = "Erro";
+    });
+  </script>
+</body>
+</html>
+
