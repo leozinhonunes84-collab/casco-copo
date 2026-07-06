@@ -710,6 +710,57 @@
     .multi-kpi-val .label { font-size: 10px; color: var(--text2); text-transform: uppercase; }
     .multi-kpi-val .value { font-size: 16px; font-weight: 700; }
 
+
+    /* ── Aba Por Horário ─────────────────────────────────────────────────────── */
+    .horario-screen { padding: 12px 16px; max-width: 1400px; margin: 0 auto; }
+    .horario-config-grid {
+      display: grid;
+      grid-template-columns: 1.8fr 1fr 1fr 1fr auto auto;
+      gap: 8px; align-items: end;
+    }
+    .horario-kpis { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 10px; }
+    .horario-kpi  {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px 16px; position: relative; overflow: hidden;
+    }
+    .horario-kpi::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:3px;
+    }
+    .horario-kpi:nth-child(1)::before { background: var(--accent); }
+    .horario-kpi:nth-child(2)::before { background: var(--accent2); }
+    .horario-kpi:nth-child(3)::before { background: var(--warning); }
+    .horario-kpi:nth-child(4)::before { background: var(--danger); }
+    .horario-kpi-label { font-size:10px; color:var(--text2); font-weight:600; text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px; }
+    .horario-kpi-value { font-size:22px; font-weight:800; }
+    .horario-kpi-sub   { font-size:11px; color:var(--text2); margin-top:2px; }
+    .horario-body { display:grid; grid-template-columns:1fr 1.4fr; gap:10px; margin-bottom:10px; }
+    .horario-chart-card {
+      background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px;
+    }
+    .horario-chart-card h3 { font-size:11px; font-weight:600; color:var(--text2); text-transform:uppercase; letter-spacing:.05em; margin-bottom:10px; }
+    .horario-table-card {
+      background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px; overflow-x:auto;
+    }
+    .horario-table-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; flex-wrap:wrap; gap:8px; }
+    .horario-table-header h3 { font-size:11px; font-weight:600; color:var(--text2); text-transform:uppercase; letter-spacing:.05em; }
+    .horario-table-actions { display:flex; gap:6px; }
+    .horario-empty { text-align:center; padding:40px; color:var(--text2); font-size:14px; }
+    @media print {
+      .header, .tabs, .config-panel, .tab-btn,
+      #loginScreen, .loading-overlay { display:none !important; }
+      .tab-screen { display:block !important; }
+      #screen-horario { display:block !important; }
+      body { background:#fff; color:#000; }
+      .horario-print-header { display:block !important; }
+    }
+    .horario-print-header {
+      display:none;
+      background:var(--surface); border:1px solid var(--border); border-radius:10px;
+      padding:14px 16px; margin-bottom:10px; font-size:13px;
+    }
+    .horario-print-header strong { font-size:15px; }
+    @media (max-width:1100px) { .horario-config-grid { grid-template-columns:1fr 1fr 1fr; } .horario-body { grid-template-columns:1fr; } }
+
   </style>
 </head>
 <body>
@@ -783,6 +834,7 @@
   <button class="tab-btn active" onclick="switchTab('chopes')">🍺 Chopes</button>
   <button class="tab-btn" onclick="switchTab('busca')">🔍 Busca de Produtos</button>
   <button class="tab-btn" onclick="switchTab('comp')">📈 Comparativos</button>
+  <button class="tab-btn" onclick="switchTab('horario')">⏰ Por Horário</button>
 </div>
 
 
@@ -1219,6 +1271,76 @@
 
 </div>
 </div><!-- /screen-comp -->
+
+<!-- ═══ TELA: POR HORÁRIO ═══ -->
+<div class="tab-screen" id="screen-horario">
+<div class="horario-screen">
+
+  <!-- Cabeçalho de impressão (visível só no print) -->
+  <div class="horario-print-header" id="horarioPrintHeader">
+    <strong>📊 Relatório Por Horário — Onze Copos</strong><br>
+    <span id="horarioPrintInfo" style="color:#666;font-size:12px"></span>
+  </div>
+
+  <!-- Config -->
+  <div class="config-panel">
+    <h2>Consulta Por Horário</h2>
+    <div class="horario-config-grid">
+      <div class="field">
+        <label>Unidade</label>
+        <select id="horarioLoja" style="min-width:160px">
+          <option value="">Selecione...</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Data</label>
+        <input type="date" id="horarioData">
+      </div>
+      <div class="field">
+        <label>Hora início</label>
+        <select id="horarioHoraInicio"></select>
+      </div>
+      <div class="field">
+        <label>Hora fim</label>
+        <select id="horarioHoraFim"></select>
+      </div>
+      <button class="btn btn-primary" onclick="buscarHorario()">🔍 Buscar</button>
+      <button class="btn btn-secondary" onclick="exportHorarioCSV()" id="btnHorarioCSV" disabled>📥 CSV</button>
+    </div>
+    <div id="horarioStatus" style="margin-top:8px;font-size:12px;color:var(--text2)">Selecione a unidade, data e faixa horária.</div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="horario-kpis">
+    <div class="horario-kpi"><div class="horario-kpi-label">Faturamento</div><div class="horario-kpi-value" id="hkFat">—</div><div class="horario-kpi-sub" id="hkFatSub"></div></div>
+    <div class="horario-kpi"><div class="horario-kpi-label">Itens vendidos</div><div class="horario-kpi-value" id="hkQtd">—</div><div class="horario-kpi-sub" id="hkQtdSub"></div></div>
+    <div class="horario-kpi"><div class="horario-kpi-label">Produtos distintos</div><div class="horario-kpi-value" id="hkProd">—</div><div class="horario-kpi-sub" id="hkProdSub"></div></div>
+    <div class="horario-kpi"><div class="horario-kpi-label">Ticket médio</div><div class="horario-kpi-value" id="hkTicket">—</div><div class="horario-kpi-sub" id="hkTicketSub">por transação</div></div>
+  </div>
+
+  <!-- Chart + Table -->
+  <div class="horario-body">
+    <div class="horario-chart-card">
+      <h3>Top produtos — Faturamento</h3>
+      <div style="position:relative;height:340px">
+        <canvas id="chartHorario"></canvas>
+      </div>
+    </div>
+    <div class="horario-table-card">
+      <div class="horario-table-header">
+        <h3>Produtos no período</h3>
+        <div class="horario-table-actions">
+          <button class="btn btn-secondary" onclick="imprimirHorario()" style="font-size:11px;padding:5px 10px">🖨 Imprimir</button>
+        </div>
+      </div>
+      <div id="horarioTableWrap">
+        <div class="horario-empty">Clique em <b>🔍 Buscar</b> para carregar os dados.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div><!-- /screen-horario -->
 
 
 
@@ -2545,6 +2667,7 @@
     document.getElementById('screen-' + name).classList.add('active');
     document.querySelector(`.tab-btn[onclick="switchTab('${name}')"]`).classList.add('active');
     if (name === 'chopes' && allData.length) renderChopes();
+    if (name === 'horario') initHorario();
   }
 
   // ── Busca de produtos ────────────────────────────────────────────────────────
@@ -3224,4 +3347,261 @@
     );
     const csv = [header, ...rows].join('\n');
     const a = document.createElement('a');
-    a.href = 'data:text
+    a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent('\uFEFF' + csv);
+    a.download = 'comparativos_zig.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // ABA POR HORÁRIO
+  // ═══════════════════════════════════════════════════════════════
+
+  let horarioData = [];
+  let _horarioChart = null;
+
+  // Gera slots de 30 min
+  function gerarSlots30() {
+    const slots = [];
+    for (let h = 0; h < 24; h++) {
+      for (let m = 0; m < 60; m += 30) {
+        slots.push(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`);
+      }
+    }
+    return slots;
+  }
+
+  function initHorario() {
+    // Popula lojas
+    const sel = document.getElementById('horarioLoja');
+    if (sel && sel.options.length <= 1) {
+      LOJAS_FIXAS.forEach(l => {
+        const o = document.createElement('option');
+        o.value = l.id; o.textContent = l.name;
+        sel.appendChild(o);
+      });
+    }
+    // Popula horários
+    const slots = gerarSlots30();
+    const selIni = document.getElementById('horarioHoraInicio');
+    const selFim = document.getElementById('horarioHoraFim');
+    if (selIni && selIni.options.length === 0) {
+      slots.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; selIni.appendChild(o); });
+      slots.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; selFim.appendChild(o); });
+      // defaults: 18:00 → 22:00
+      selIni.value = '18:00';
+      selFim.value = '22:00';
+    }
+    // Data padrão: hoje
+    const inp = document.getElementById('horarioData');
+    if (inp && !inp.value) {
+      inp.value = new Date().toISOString().split('T')[0];
+    }
+  }
+
+  async function buscarHorario() {
+    const lojaId    = document.getElementById('horarioLoja').value;
+    const data      = document.getElementById('horarioData').value;
+    const horaIni   = document.getElementById('horarioHoraInicio').value;
+    const horaFim   = document.getElementById('horarioHoraFim').value;
+
+    if (!lojaId) { alert('Selecione a unidade.'); return; }
+    if (!data)   { alert('Selecione a data.'); return; }
+    if (!horaIni || !horaFim) { alert('Selecione o horário.'); return; }
+
+    const [hiH, hiM] = horaIni.split(':').map(Number);
+    const [hfH, hfM] = horaFim.split(':').map(Number);
+    const startMin   = hiH * 60 + hiM;
+    const endMin     = hfH * 60 + hfM;
+    if (startMin >= endMin) { alert('Hora fim deve ser maior que hora início.'); return; }
+
+    const st = document.getElementById('horarioStatus');
+    st.textContent = 'Buscando...';
+    document.getElementById('btnHorarioCSV').disabled = true;
+    showLoading(true, 'Buscando por horário...');
+
+    try {
+      const items = await fetchSaida(lojaId, data, data);
+
+      // Filtra: não estornado + dentro da faixa horária
+      const filtered = items.filter(item => {
+        if (item.isRefunded) return false;
+        const dt = item.transactionDate || item.eventDate;
+        if (!dt) return false;
+        const d = new Date(dt);
+        const mins = d.getHours() * 60 + d.getMinutes();
+        return mins >= startMin && mins < endMin;
+      });
+
+      horarioData = filtered;
+      const nomeLoja = LOJAS_FIXAS.find(l => l.id === lojaId)?.name || lojaId;
+      const dtFmt    = new Date(data + 'T12:00:00').toLocaleDateString('pt-BR');
+      st.innerHTML   = `✅ <b>${filtered.length}</b> itens encontrados em <b>${nomeLoja}</b> — ${dtFmt} <b>${horaIni}–${horaFim}</b>`;
+
+      // Atualiza cabeçalho de impressão
+      document.getElementById('horarioPrintInfo').textContent =
+        `Unidade: ${nomeLoja} · Data: ${dtFmt} · Horário: ${horaIni} – ${horaFim}`;
+
+      renderHorario();
+      document.getElementById('btnHorarioCSV').disabled = false;
+    } catch(e) {
+      st.textContent = '❌ Erro ao buscar: ' + e.message;
+      console.error(e);
+    } finally {
+      showLoading(false);
+    }
+  }
+
+  function renderHorario() {
+    if (!horarioData.length) {
+      document.getElementById('horarioTableWrap').innerHTML =
+        '<div class="horario-empty">Nenhum item encontrado nesta faixa horária.</div>';
+      ['hkFat','hkQtd','hkProd','hkTicket'].forEach(function(id){
+        document.getElementById(id).textContent = '0';
+      });
+      return;
+    }
+
+    var fat    = horarioData.reduce(function(s,x){ return s + x.unitValue * x.count - (x.discountValue||0); }, 0);
+    var qty    = horarioData.reduce(function(s,x){ return s + x.count; }, 0);
+    var prods  = new Set(horarioData.map(function(x){ return x.productName; })).size;
+    var txnSet = new Set(horarioData.map(function(x){ return x.transactionId; }).filter(Boolean));
+    var txns   = txnSet.size || qty;
+    var ticket = txns > 0 ? fat / txns : 0;
+
+    document.getElementById('hkFat').textContent     = fmt(fat);
+    document.getElementById('hkFatSub').textContent  = fmtNum(qty) + ' unidades';
+    document.getElementById('hkQtd').textContent     = fmtNum(qty);
+    document.getElementById('hkQtdSub').textContent  = 'em ' + fmtNum(txns) + ' transações';
+    document.getElementById('hkProd').textContent    = fmtNum(prods);
+    document.getElementById('hkProdSub').textContent = 'produtos diferentes';
+    document.getElementById('hkTicket').textContent  = fmt(ticket);
+
+    // Agrega por produto
+    var agg = {};
+    horarioData.forEach(function(x) {
+      var k = x.productName;
+      if (!agg[k]) agg[k] = { name: k, cat: x.productCategory || '—', qty: 0, fat: 0, unit: x.unitValue };
+      agg[k].qty += x.count;
+      agg[k].fat += x.unitValue * x.count - (x.discountValue || 0);
+    });
+    var rows = Object.values(agg).sort(function(a,b){ return b.fat - a.fat; });
+    var fatTotal = rows.reduce(function(s,r){ return s + r.fat; }, 0);
+
+    // Chart — top 10 horizontal
+    var top10 = rows.slice(0, 10);
+    if (_horarioChart) { _horarioChart.destroy(); _horarioChart = null; }
+    var ctx = document.getElementById('chartHorario');
+    if (ctx && top10.length) {
+      _horarioChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: top10.map(function(r){ return r.name.length > 22 ? r.name.slice(0,22)+'…' : r.name; }),
+          datasets: [{
+            label: 'Faturamento (R$)',
+            data: top10.map(function(r){ return +(r.fat/100).toFixed(2); }),
+            backgroundColor: top10.map(function(_,i){ return 'hsla('+(240+i*18)+',70%,65%,0.8)'; }),
+            borderRadius: 4
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: {
+              ticks: { color: '#9aa0b8', font:{size:11},
+                callback: function(v){ return 'R$' + v.toLocaleString('pt-BR'); }
+              },
+              grid: { color:'rgba(255,255,255,.06)' }
+            },
+            y: { ticks: { color: '#e8eaf0', font:{size:11} }, grid: { display:false } }
+          }
+        }
+      });
+    }
+
+    // Tabela
+    var rowsHTML = rows.map(function(r) {
+      var pct  = fatTotal > 0 ? (r.fat / fatTotal * 100).toFixed(1) : '0.0';
+      var barW = fatTotal > 0 ? Math.round(r.fat / fatTotal * 100) : 0;
+      return '<tr>' +
+        '<td style="padding:7px 10px;border-bottom:1px solid var(--border);font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+r.name+'">'+r.name+'</td>' +
+        '<td style="padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text2);font-size:11px">'+r.cat+'</td>' +
+        '<td style="padding:7px 10px;border-bottom:1px solid var(--border);text-align:right;font-weight:700">'+fmtNum(r.qty)+'</td>' +
+        '<td style="padding:7px 10px;border-bottom:1px solid var(--border);text-align:right;color:var(--text2)">'+fmt(r.unit)+'</td>' +
+        '<td style="padding:7px 10px;border-bottom:1px solid var(--border);text-align:right;font-weight:700;color:var(--accent2)">'+fmt(r.fat)+'</td>' +
+        '<td style="padding:7px 10px;border-bottom:1px solid var(--border);text-align:right">' +
+          '<div style="display:flex;align-items:center;justify-content:flex-end;gap:6px">' +
+            '<div style="width:50px;height:4px;background:var(--surface2);border-radius:2px;overflow:hidden">' +
+              '<div style="width:'+barW+'%;height:100%;background:var(--accent);border-radius:2px"></div>' +
+            '</div>' +
+            '<span style="font-weight:600;min-width:38px;text-align:right">'+pct+'%</span>' +
+          '</div>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+
+    var totalRow = '<tr style="background:var(--surface2)">' +
+      '<td colspan="2" style="padding:8px 10px;font-weight:700;font-size:12px">TOTAL</td>' +
+      '<td style="padding:8px 10px;text-align:right;font-weight:700">'+fmtNum(qty)+'</td>' +
+      '<td style="padding:8px 10px;text-align:right;color:var(--text2)">—</td>' +
+      '<td style="padding:8px 10px;text-align:right;font-weight:800;color:var(--accent2)">'+fmt(fatTotal)+'</td>' +
+      '<td style="padding:8px 10px;text-align:right;font-weight:700">100%</td>' +
+    '</tr>';
+
+    document.getElementById('horarioTableWrap').innerHTML =
+      '<table style="width:100%;border-collapse:collapse;font-size:12px">' +
+      '<thead><tr>' +
+        '<th style="text-align:left;padding:7px 10px;background:var(--surface2);color:var(--text2);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;border-radius:8px 0 0 8px">Produto</th>' +
+        '<th style="padding:7px 10px;background:var(--surface2);color:var(--text2);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em">Categoria</th>' +
+        '<th style="text-align:right;padding:7px 10px;background:var(--surface2);color:var(--text2);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em">Qtd</th>' +
+        '<th style="text-align:right;padding:7px 10px;background:var(--surface2);color:var(--text2);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em">Preço unit.</th>' +
+        '<th style="text-align:right;padding:7px 10px;background:var(--surface2);color:var(--text2);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em">Faturamento</th>' +
+        '<th style="text-align:right;padding:7px 10px;background:var(--surface2);color:var(--text2);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;border-radius:0 8px 8px 0">% Período</th>' +
+      '</tr></thead>' +
+      '<tbody>' + rowsHTML + totalRow + '</tbody>' +
+      '</table>';
+  }
+
+  function exportHorarioCSV() {
+    if (!horarioData.length) { alert('Nenhum dado para exportar.'); return; }
+    var agg = {};
+    horarioData.forEach(function(x) {
+      var k = x.productName;
+      if (!agg[k]) agg[k] = { name: k, cat: x.productCategory || '', qty: 0, fat: 0, unit: x.unitValue };
+      agg[k].qty += x.count;
+      agg[k].fat += x.unitValue * x.count - (x.discountValue || 0);
+    });
+    var rows     = Object.values(agg).sort(function(a,b){ return b.fat - a.fat; });
+    var fatTotal = rows.reduce(function(s,r){ return s + r.fat; }, 0);
+    var lojaId   = document.getElementById('horarioLoja').value;
+    var nomeLoja = (LOJAS_FIXAS.find(function(l){ return l.id === lojaId; }) || {}).name || lojaId;
+    var data     = document.getElementById('horarioData').value;
+    var horaIni  = document.getElementById('horarioHoraInicio').value;
+    var horaFim  = document.getElementById('horarioHoraFim').value;
+
+    var meta   = 'Unidade: ' + nomeLoja + ';Data: ' + data + ';Horário: ' + horaIni + ' - ' + horaFim + ';;;';
+    var header = 'Produto;Categoria;Qtd;Preço Unit.;Faturamento;% Período';
+    var body   = rows.map(function(r) {
+      var pct = fatTotal > 0 ? (r.fat / fatTotal * 100).toFixed(2).replace('.',',') : '0,00';
+      return [r.name, r.cat, r.qty,
+        (r.unit/100).toFixed(2).replace('.',','),
+        (r.fat/100).toFixed(2).replace('.',','),
+        pct].join(';');
+    });
+    var csv = [meta, header].concat(body).join('\n');
+    var a = document.createElement('a');
+    a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent('\uFEFF' + csv);
+    a.download = 'horario_' + nomeLoja.replace(/\s+/g,'_') + '_' + data + '_' +
+      horaIni.replace(':','h') + '-' + horaFim.replace(':','h') + '.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  }
+
+  function imprimirHorario() {
+    if (!horarioData.length) { alert('Busque os dados primeiro.'); return; }
+    window.print();
+  }
+
+</script>
+</body>
+</html>
