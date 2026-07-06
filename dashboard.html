@@ -153,6 +153,24 @@ tr.chope-sub:hover td{background:rgba(255,255,255,.035);}
 .login-btn:hover{background:var(--amber-dark);}
 .login-btn:active{transform:scale(.98);}
 .login-footer{margin-top:22px;font-size:.65rem;color:rgba(255,255,255,.18);}
+
+/* ── Por Horário ─────────────────────────────────────── */
+.h-cfg{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:12px 16px;margin-bottom:12px;}
+.h-cfg-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr auto auto;gap:8px;align-items:end;}
+.h-cfg .cl{font-size:.66rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
+.h-cats{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;align-items:center;}
+.h-cats .cl{font-size:.68rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-right:2px;}
+.h-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:12px;}
+.h-body{display:grid;grid-template-columns:1fr 1.5fr;gap:12px;margin-bottom:12px;}
+.h-card{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:14px;}
+.h-card-ttl{font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px;}
+.h-tbl-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px;}
+.h-empty{text-align:center;padding:36px;color:var(--muted);font-size:.9rem;}
+.h-status{font-size:.74rem;color:var(--muted);margin-top:6px;min-height:16px;}
+@media(max-width:1100px){.h-cfg-grid{grid-template-columns:1fr 1fr 1fr;}.h-body{grid-template-columns:1fr;}}
+@media print{header,.controls,.tabs,.h-cfg,.h-cats,.h-ph{display:none!important;}.tab-content{display:block!important;}#tab-horario{display:block!important;}.h-print-hdr{display:block!important;}}
+.h-print-hdr{display:none;background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:12px 16px;margin-bottom:12px;font-size:.85rem;}
+
 </style>
 </head>
 <body>
@@ -247,6 +265,7 @@ tr.chope-sub:hover td{background:rgba(255,255,255,.035);}
   <div class="tab" onclick="switchTab('busca')">🔍 Busca de Produtos</div>
   <div class="tab" onclick="switchTab('comp')">📈 Comparativos</div>
   <div class="tab" onclick="switchTab('dash')">📊 Dashboard</div>
+  <div class="tab" onclick="switchTab('horario')">⏰ Por Horário</div>
 </div>
 
 <main>
@@ -273,7 +292,7 @@ tr.chope-sub:hover td{background:rgba(255,255,255,.035);}
       <div style="display:flex;gap:5px;flex-wrap:wrap;">
         <label class="sz-tgl"><input type="checkbox" id="szREGUA" checked onchange="renderChopesTab()"> REGUA <span style="opacity:.6">190ml</span></label>
         <label class="sz-tgl"><input type="checkbox" id="szP"     checked onchange="renderChopesTab()"> P <span style="opacity:.6">300ml</span></label>
-        <label class="sz-tgl"><input type="checkbox" id="szG"     checked onchange="renderChopesTab()"> G <span style="opacity:.6">450ml</span></label>
+        <label class="sz-tgl"><input type="checkbox" id="szG"     checked onchange="renderChopesTab()"> G <span style="opacity:.6">400–450ml</span></label>
         <label class="sz-tgl"><input type="checkbox" id="sz1L"    checked onchange="renderChopesTab()"> 1L <span style="opacity:.6">1000ml</span></label>
       </div>
     </div>
@@ -399,6 +418,76 @@ tr.chope-sub:hover td{background:rgba(255,255,255,.035);}
   </div>
 </div>
 
+
+<!-- ════════════ POR HORÁRIO ════════════ -->
+<div class="tab-content" id="tab-horario">
+
+  <!-- Cabeçalho de impressão -->
+  <div class="h-print-hdr" id="hPrintHdr">
+    <strong>📊 Relatório Por Horário — Brewteco</strong><br>
+    <span id="hPrintInfo" style="color:var(--muted);font-size:.8rem"></span>
+  </div>
+
+  <!-- Config -->
+  <div class="h-cfg">
+    <div class="h-cfg-grid">
+      <div><div class="cl">Unidade</div>
+        <select id="hLoja" style="width:100%"><option value="">Selecione...</option></select>
+      </div>
+      <div><div class="cl">Data</div>
+        <input type="date" id="hData" style="width:100%">
+      </div>
+      <div><div class="cl">Hora início</div>
+        <select id="hHoraIni" style="width:100%"></select>
+      </div>
+      <div><div class="cl">Hora fim</div>
+        <select id="hHoraFim" style="width:100%"></select>
+      </div>
+      <button class="btn btn-p" onclick="buscarHorario()">🔍 Buscar</button>
+      <button class="btn btn-s" onclick="exportHorarioCSV()" id="btnHorCSV" disabled>📥 CSV</button>
+    </div>
+    <div class="h-status" id="hStatus">Selecione a unidade, data e faixa horária.</div>
+  </div>
+
+  <!-- Filtro de categoria -->
+  <div class="h-cats">
+    <span class="cl">Categoria:</span>
+    <button class="gchip active" id="hcat-TODOS"    onclick="setHorCat('TODOS')">📋 Todos</button>
+    <button class="gchip"        id="hcat-CHOPE"    onclick="setHorCat('CHOPE')">🍺 Chope</button>
+    <button class="gchip"        id="hcat-CERVEJA"  onclick="setHorCat('CERVEJA')">🍻 Cerveja</button>
+    <button class="gchip"        id="hcat-COMIDA"   onclick="setHorCat('COMIDA')">🍽️ Comida</button>
+    <button class="gchip"        id="hcat-DRINQUE"  onclick="setHorCat('DRINQUE')">🍹 Drinque</button>
+    <button class="gchip"        id="hcat-PIZZA"    onclick="setHorCat('PIZZA')">🍕 Pizza</button>
+    <button class="gchip"        id="hcat-SOFT"     onclick="setHorCat('SOFT')">🥤 Soft</button>
+    <button class="gchip"        id="hcat-VINHO"    onclick="setHorCat('VINHO')">🍷 Vinho</button>
+    <button class="gchip"        id="hcat-LOJINHA"  onclick="setHorCat('LOJINHA')">🛍️ Lojinha</button>
+  </div>
+
+  <!-- KPIs -->
+  <div class="h-kpis">
+    <div class="kpi" style="--acc:#F5A623"><div class="kpi-ico">💰</div><div class="kpi-val" id="hkFat">—</div><div class="kpi-lbl">Faturamento</div><div class="kpi-sub" id="hkFatS"></div></div>
+    <div class="kpi" style="--acc:#2196F3"><div class="kpi-ico">📦</div><div class="kpi-val" id="hkQtd">—</div><div class="kpi-lbl">Itens vendidos</div><div class="kpi-sub" id="hkQtdS"></div></div>
+    <div class="kpi" style="--acc:#4CAF50"><div class="kpi-ico">🏷️</div><div class="kpi-val" id="hkProd">—</div><div class="kpi-lbl">Produtos distintos</div></div>
+    <div class="kpi" style="--acc:#9C27B0"><div class="kpi-ico">🎯</div><div class="kpi-val" id="hkTck">—</div><div class="kpi-lbl">Ticket médio / txn</div></div>
+  </div>
+
+  <!-- Chart + Tabela -->
+  <div class="h-body">
+    <div class="h-card">
+      <div class="h-card-ttl">Top produtos — faturamento</div>
+      <div style="position:relative;height:320px"><canvas id="chartHor"></canvas></div>
+    </div>
+    <div class="h-card">
+      <div class="h-tbl-hdr">
+        <div class="h-card-ttl" style="margin-bottom:0">Produtos na faixa</div>
+        <button class="btn btn-s" onclick="imprimirHorario()" style="font-size:.72rem">🖨 Imprimir</button>
+      </div>
+      <div id="hTblWrap"><div class="h-empty">Clique em <b>🔍 Buscar</b> para carregar.</div></div>
+    </div>
+  </div>
+
+</div><!-- /tab-horario -->
+
 </main>
 
 <script>
@@ -415,6 +504,8 @@ const SZ = [
   {size:'G',     liters:.450},
   {size:'P',     liters:.300},
 ];
+// Ferradura e Morro da Urca usam copo G de 400ml (não 450ml)
+const G400_LOJAS = new Set(['Brewteco Ferradura','Brewteco Morro da Urca']);
 function parseSz(name) {
   if (!name) return null;
   const n = name.trim().toUpperCase();
@@ -434,7 +525,9 @@ function parseSz(name) {
 function calcL(row) {
   if (row.fractionalAmount && row.fractionUnit === 'L') return +row.fractionalAmount;
   const p = parseSz(row.productName);
-  return p ? p.liters * (row.count || 0) : 0;
+  if (!p) return 0;
+  const liters = (p.size === 'G' && G400_LOJAS.has(row._loja)) ? 0.400 : p.liters;
+  return liters * (row.count || 0);
 }
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
@@ -449,6 +542,7 @@ function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'
 function switchTab(id) {
   document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
+  if (id === 'horario') initHorario();
   const content=document.getElementById('tab-'+id);
   if(content) content.classList.add('active');
   const tabs=document.querySelectorAll('.tab');
@@ -858,6 +952,8 @@ function buildChopeData(data) {
       parsed={parent:(d.productName||'').trim().toUpperCase(),size:'?',liters:0}; liters=0;
     }
     if (!parsed) continue;
+    // Ferradura e Morro da Urca: G = 400ml
+    if (parsed.size === 'G' && G400_LOJAS.has(d._loja)) liters = 0.400;
 
     const par=parsed.parent||(d.productName||'').trim().toUpperCase();
     const sz=parsed.size;
@@ -930,7 +1026,7 @@ function renderChopesTab() {
 
   document.getElementById('chThead').innerHTML=`<tr>
     <th>Chope</th>
-    ${visCols.map(s=>`<th class="num">${s}<br><span style="font-size:.63rem;opacity:.5;">${s==='REGUA'?'190ml':s==='P'?'300ml':s==='G'?'450ml':'1000ml'}</span></th>`).join('')}
+    ${visCols.map(s=>`<th class="num">${s}<br><span style="font-size:.63rem;opacity:.5;">${s==='REGUA'?'190ml':s==='P'?'300ml':s==='G'?'400–450ml':'1000ml'}</span></th>`).join('')}
     <th class="num">Litros</th>
     <th class="num">Faturamento</th>
     <th class="num">% Total</th>
@@ -1357,8 +1453,8 @@ async function compareData() {
         <div style="overflow-x:auto;"><table>
           <thead><tr><th>Métrica</th>${periods.map(p=>`<th class="num" style="min-width:120px;">${esc(p.label)}<br><span style="font-size:.63rem;font-weight:400;opacity:.6;">${p.dtI}→${p.dtF}</span></th>`).join('')}</tr></thead>
           <tbody>
-            <tr><td>💰 Faturamento</td>${periods.map((p,i)=>{const prev=i>0?periods[0].tF:null;const ar=prev===null?'':(p.tF>prev?' <span style="color:#4CAF50">▲</span>':(p.tF<prev?' <span style="color:#EF5350">▼</span>':''));return `<td class="num" style="font-weight:700;">${fBRL(p.tF)}${ar}</td>`;}).join('')}</tr>
-            <tr><td>📦 Quantidade</td>${periods.map((p,i)=>{const prev=i>0?periods[0].tQ:null;const ar=prev===null?'':(p.tQ>prev?' <span style="color:#4CAF50">▲</span>':(p.tQ<prev?' <span style="color:#EF5350">▼</span>':''));return `<td class="num">${fN(p.tQ)}${ar}</td>`;}).join('')}</tr>
+            <tr><td>💰 Faturamento</td>${periods.map((p,i)=>{if(i===0&&periods.length>1){const ref=periods[1].tF;const d=p.tF-ref;const pct=ref>0?d/ref*100:0;const col=d>=0?'#4CAF50':'#EF5350';return `<td class="num" style="font-weight:700;">${fBRL(p.tF)}<span style="color:${col};font-size:.68rem;display:block;">${d>=0?'▲ +':'▼ '}${Math.abs(pct).toFixed(1)}%</span></td>`;}return `<td class="num" style="font-weight:700;">${fBRL(p.tF)}</td>`;}).join('')}</tr>
+            <tr><td>📦 Quantidade</td>${periods.map((p,i)=>{if(i===0&&periods.length>1){const ref=periods[1].tQ;const d=p.tQ-ref;const pct=ref>0?d/ref*100:0;const col=d>=0?'#4CAF50':'#EF5350';return `<td class="num">${fN(p.tQ)}<span style="color:${col};font-size:.68rem;display:block;">${d>=0?'▲ +':'▼ '}${Math.abs(pct).toFixed(1)}%</span></td>`;}return `<td class="num">${fN(p.tQ)}</td>`;}).join('')}</tr>
             <tr><td>🍺 Litros</td>${periods.map(p=>`<td class="num">${fL(p.tL)}</td>`).join('')}</tr>
             <tr><td>🎫 Ticket Médio</td>${periods.map(p=>`<td class="num">${p.tQ>0?fBRL(p.tF/p.tQ):'—'}</td>`).join('')}</tr>
           </tbody>
@@ -1382,7 +1478,7 @@ async function compareData() {
               return `<tr class="comp-prod-row" data-nm="${nm}" data-idx="${idx}" onclick="toggleCompRow(${idx})" style="cursor:pointer;">
                 <td style="text-align:center;color:var(--muted);font-size:.7rem;" id="ctri-${idx}">▶</td>
                 <td style="font-size:.8rem;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${nm}">${esc(nm)}</td>
-                ${periods.map((p,i)=>{if(!p.byP[nm])return '<td class="num">—</td>';const cur=p.byP[nm].value;const prev=i>0&&periods[0].byP[nm]?periods[0].byP[nm].value:null;const ar=prev===null?'':(cur>prev?' <span style="color:#4CAF50;font-size:.7rem">▲</span>':(cur<prev?' <span style="color:#EF5350;font-size:.7rem">▼</span>':''));return `<td class="num">${fBRL(cur)}${ar}</td>`;}).join('')}
+                ${periods.map((p,i)=>{if(!p.byP[nm])return '<td class="num">—</td>';const cur=p.byP[nm].value;if(i===0&&periods.length>1&&periods[1].byP[nm]){const ref=periods[1].byP[nm].value;const d=cur-ref;const pct=ref>0?d/ref*100:0;const col=d>=0?'#4CAF50':'#EF5350';return `<td class="num">${fBRL(cur)}<span style="color:${col};font-size:.65rem;display:block;">${d>=0?'▲ +':'▼ '}${Math.abs(pct).toFixed(1)}%</span></td>`;}return `<td class="num">${fBRL(cur)}</td>`;}).join('')}
               </tr>${detRows}`;
             }).join('')}
           </tbody>
@@ -1414,6 +1510,265 @@ function showT(msg, dur=6000) {
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
+
+// ═══════════════════════════════════════════════════════
+// ABA POR HORÁRIO
+// ═══════════════════════════════════════════════════════
+var _horData = [];
+var _horRaw  = [];
+var _horCat  = 'TODOS';
+var _horChart2 = null;
+var _horInitDone = false;
+
+function initHorario() {
+  if (_horInitDone) return;
+  _horInitDone = true;
+
+  // Popula lojas
+  var sel = document.getElementById('hLoja');
+  LOJAS_FIXAS.forEach(function(l) {
+    var o = document.createElement('option');
+    o.value = l.id; o.textContent = l.name;
+    sel.appendChild(o);
+  });
+
+  // Popula slots 30min
+  var slots = [];
+  for (var h = 0; h < 24; h++) {
+    for (var m = 0; m < 60; m += 30) {
+      slots.push((h < 10 ? '0' : '') + h + ':' + (m === 0 ? '00' : '30'));
+    }
+  }
+  var selI = document.getElementById('hHoraIni');
+  var selF = document.getElementById('hHoraFim');
+  slots.forEach(function(s) {
+    var oI = document.createElement('option'); oI.value = s; oI.textContent = s; selI.appendChild(oI);
+    var oF = document.createElement('option'); oF.value = s; oF.textContent = s; selF.appendChild(oF);
+  });
+  selI.value = '18:00';
+  selF.value = '22:00';
+
+  // Data padrão: hoje
+  var dEl = document.getElementById('hData');
+  if (!dEl.value) dEl.value = toISO(new Date());
+}
+
+function setHorCat(cat) {
+  _horCat = cat;
+  document.querySelectorAll('.gchip[id^="hcat-"]').forEach(function(b) { b.classList.remove('active'); });
+  var btn = document.getElementById('hcat-' + cat);
+  if (btn) btn.classList.add('active');
+  if (_horRaw.length) renderHorario();
+}
+
+async function buscarHorario() {
+  var lojaId  = document.getElementById('hLoja').value;
+  var data    = document.getElementById('hData').value;
+  var horaIni = document.getElementById('hHoraIni').value;
+  var horaFim = document.getElementById('hHoraFim').value;
+  var st      = document.getElementById('hStatus');
+
+  if (!lojaId) { alert('Selecione a unidade.'); return; }
+  if (!data)   { alert('Selecione a data.'); return; }
+
+  var pI = horaIni.split(':').map(Number);
+  var pF = horaFim.split(':').map(Number);
+  var startMin = pI[0] * 60 + pI[1];
+  var endMin   = pF[0] * 60 + pF[1];
+  if (startMin >= endMin) { alert('Hora fim deve ser maior que hora início.'); return; }
+
+  st.textContent = 'Buscando...';
+  document.getElementById('btnHorCSV').disabled = true;
+
+  var loadEl = document.getElementById('loadBar');
+  if (loadEl) loadEl.style.display = 'flex';
+
+  try {
+    var items = await fetchLoja(lojaId, data, data);
+
+    // filtra por horário
+    _horRaw = items.filter(function(x) {
+      if (x.isRefunded) return false;
+      var dt = x.transactionDate || x.eventDate;
+      if (!dt) return false;
+      var d = new Date(dt);
+      var mins = d.getHours() * 60 + d.getMinutes();
+      return mins >= startMin && mins < endMin;
+    });
+
+    var nomeLoja = (LOJAS_FIXAS.find(function(l){ return l.id === lojaId; }) || {}).name || lojaId;
+    var dtFmt    = new Date(data + 'T12:00:00').toLocaleDateString('pt-BR');
+    st.innerHTML = '<b>' + _horRaw.length + '</b> itens em <b>' + nomeLoja + '</b> — ' + dtFmt + ' ' + horaIni + '–' + horaFim;
+
+    document.getElementById('hPrintInfo').textContent =
+      'Unidade: ' + nomeLoja + '  ·  Data: ' + dtFmt + '  ·  Horário: ' + horaIni + ' – ' + horaFim;
+
+    renderHorario();
+    document.getElementById('btnHorCSV').disabled = false;
+  } catch(e) {
+    st.textContent = '❌ Erro: ' + e.message;
+    console.error(e);
+  } finally {
+    if (loadEl) loadEl.style.display = 'none';
+  }
+}
+
+function getHorFiltered() {
+  if (_horCat === 'TODOS') return _horRaw;
+  return _horRaw.filter(function(x) {
+    return (x.productCategory || '').toUpperCase() === _horCat;
+  });
+}
+
+function renderHorario() {
+  var data = getHorFiltered();
+
+  if (!data.length) {
+    document.getElementById('hTblWrap').innerHTML =
+      '<div class="h-empty">Nenhum item' + (_horCat !== 'TODOS' ? ' na categoria ' + _horCat : '') + ' nesta faixa.</div>';
+    ['hkFat','hkQtd','hkProd','hkTck'].forEach(function(id){ document.getElementById(id).textContent = '0'; });
+    document.getElementById('hkFatS').textContent = '';
+    document.getElementById('hkQtdS').textContent = '';
+    if (_horChart2) { _horChart2.destroy(); _horChart2 = null; }
+    return;
+  }
+
+  // KPIs
+  var fat   = data.reduce(function(s,x){ return s + x.unitValue * x.count - (x.discountValue||0); }, 0);
+  var qty   = data.reduce(function(s,x){ return s + x.count; }, 0);
+  var prods = new Set(data.map(function(x){ return x.productName; })).size;
+  var txns  = new Set(data.map(function(x){ return x.transactionId; }).filter(Boolean)).size || qty;
+  var tck   = txns > 0 ? fat / txns : 0;
+
+  document.getElementById('hkFat').textContent  = fBRL(fat);
+  document.getElementById('hkFatS').textContent = fN(qty) + ' unidades';
+  document.getElementById('hkQtd').textContent  = fN(qty);
+  document.getElementById('hkQtdS').textContent = fN(txns) + ' transações';
+  document.getElementById('hkProd').textContent = fN(prods);
+  document.getElementById('hkTck').textContent  = fBRL(tck);
+
+  // Agrega por produto
+  var agg = {};
+  data.forEach(function(x) {
+    var k = x.productName;
+    if (!agg[k]) agg[k] = { name:k, cat:x.productCategory||'—', qty:0, fat:0, unit:x.unitValue };
+    agg[k].qty += x.count;
+    agg[k].fat += x.unitValue * x.count - (x.discountValue||0);
+  });
+  var rows     = Object.values(agg).sort(function(a,b){ return b.fat - a.fat; });
+  var fatTotal = rows.reduce(function(s,r){ return s + r.fat; }, 0);
+
+  // Chart top 10
+  var top = rows.slice(0, 10);
+  if (_horChart2) { _horChart2.destroy(); _horChart2 = null; }
+  var ctx = document.getElementById('chartHor');
+  if (ctx && top.length) {
+    _horChart2 = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: top.map(function(r){ return r.name.length > 22 ? r.name.slice(0,22)+'…' : r.name; }),
+        datasets: [{
+          label: 'R$',
+          data: top.map(function(r){ return +(r.fat/100).toFixed(2); }),
+          backgroundColor: PAL.concat(PAL),
+          borderRadius: 4
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display:false } },
+        scales: {
+          x: { ticks:{ color:'#8A8A9A', font:{size:11},
+            callback: function(v){ return 'R$' + v.toLocaleString('pt-BR'); }
+          }, grid:{ color:'rgba(255,255,255,.05)' } },
+          y: { ticks:{ color:'#E0E0E0', font:{size:11} }, grid:{ display:false } }
+        }
+      }
+    });
+  }
+
+  // Tabela
+  var rowsHTML = rows.map(function(r) {
+    var pct  = fatTotal > 0 ? (r.fat / fatTotal * 100).toFixed(1) : '0.0';
+    var barW = fatTotal > 0 ? Math.round(r.fat / fatTotal * 100) : 0;
+    return '<tr>' +
+      '<td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600" title="'+esc(r.name)+'">'+esc(r.name)+'</td>' +
+      '<td><span class="badge b-cat">'+esc(r.cat)+'</span></td>' +
+      '<td class="num" style="font-weight:700">'+fN(r.qty)+'</td>' +
+      '<td class="num" style="color:var(--muted)">'+fBRL(r.unit)+'</td>' +
+      '<td class="num" style="font-weight:700;color:var(--amber)">'+fBRL(r.fat)+'</td>' +
+      '<td class="num">' +
+        '<div style="display:flex;align-items:center;justify-content:flex-end;gap:5px">' +
+          '<div style="width:44px;height:3px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden">' +
+            '<div style="width:'+barW+'%;height:100%;background:var(--amber);border-radius:2px"></div>' +
+          '</div>' +
+          '<span style="font-weight:600;min-width:36px;text-align:right">'+pct+'%</span>' +
+        '</div>' +
+      '</td>' +
+    '</tr>';
+  }).join('');
+
+  document.getElementById('hTblWrap').innerHTML =
+    '<table><thead><tr>' +
+      '<th>Produto</th><th>Categoria</th>' +
+      '<th class="num">Qtd</th><th class="num">Unit.</th>' +
+      '<th class="num">Faturamento</th><th class="num">% Período</th>' +
+    '</tr></thead><tbody>' + rowsHTML +
+    '<tr style="background:var(--dark2)">' +
+      '<td colspan="2" style="font-weight:700;font-size:.78rem">TOTAL</td>' +
+      '<td class="num" style="font-weight:700">'+fN(qty)+'</td>' +
+      '<td class="num" style="color:var(--muted)">—</td>' +
+      '<td class="num" style="font-weight:800;color:var(--amber)">'+fBRL(fatTotal)+'</td>' +
+      '<td class="num" style="font-weight:700">100%</td>' +
+    '</tr></tbody></table>';
+}
+
+function exportHorarioCSV() {
+  var data = getHorFiltered();
+  if (!data.length) { alert('Nenhum dado para exportar.'); return; }
+  var agg = {};
+  data.forEach(function(x) {
+    var k = x.productName;
+    if (!agg[k]) agg[k] = { name:k, cat:x.productCategory||'', qty:0, fat:0, unit:x.unitValue };
+    agg[k].qty += x.count;
+    agg[k].fat += x.unitValue * x.count - (x.discountValue||0);
+  });
+  var rows     = Object.values(agg).sort(function(a,b){ return b.fat - a.fat; });
+  var fatTotal = rows.reduce(function(s,r){ return s + r.fat; }, 0);
+  var lojaId   = document.getElementById('hLoja').value;
+  var nomeLoja = (LOJAS_FIXAS.find(function(l){ return l.id === lojaId; }) || {}).name || lojaId;
+  var data2    = document.getElementById('hData').value;
+  var horaIni  = document.getElementById('hHoraIni').value;
+  var horaFim  = document.getElementById('hHoraFim').value;
+  var cat      = _horCat !== 'TODOS' ? ' [' + _horCat + ']' : '';
+
+  var meta   = 'Unidade: ' + nomeLoja + ';Data: ' + data2 + ';Horário: ' + horaIni + ' - ' + horaFim + cat + ';;;';
+  var header = 'Produto;Categoria;Qtd;Preço Unit. (R$);Faturamento (R$);% Período';
+  var body   = rows.map(function(r) {
+    var pct = fatTotal > 0 ? (r.fat / fatTotal * 100).toFixed(2).replace('.',',') : '0,00';
+    return [
+      '"' + r.name.replace(/"/g,'""') + '"',
+      r.cat,
+      r.qty,
+      (r.unit / 100).toFixed(2).replace('.',','),
+      (r.fat  / 100).toFixed(2).replace('.',','),
+      pct
+    ].join(';');
+  });
+  var csv = [meta, header].concat(body).join('\n');
+  var a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent('\uFEFF' + csv);
+  a.download = 'horario_' + nomeLoja.replace(/\s+/g,'_') + '_' + data2 +
+    '_' + horaIni.replace(':','h') + '-' + horaFim.replace(':','h') + cat.replace(/[\[\] ]/g,'') + '.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+function imprimirHorario() {
+  if (!_horRaw.length) { alert('Busque os dados primeiro.'); return; }
+  window.print();
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   setRange('today');
   await loadLojas();
