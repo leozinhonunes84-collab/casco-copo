@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Brewteco — Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
   --amber:#F5A623;--amber-dark:#D4891A;
@@ -154,6 +155,17 @@ tr.chope-sub:hover td{background:rgba(255,255,255,.035);}
 .login-btn:active{transform:scale(.98);}
 .login-footer{margin-top:22px;font-size:.65rem;color:rgba(255,255,255,.18);}
 
+/* ── Por Produto (Cross-Store) ──────────────────────── */
+.pp-cfg{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:12px 16px;margin-bottom:12px;}
+.pp-cfg-grid{display:grid;grid-template-columns:2fr 1fr 1fr auto auto auto;gap:8px;align-items:end;}
+.pp-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:12px;}
+.pp-body{display:grid;grid-template-columns:1fr 1.4fr;gap:12px;margin-bottom:12px;}
+.pp-card{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:14px;}
+.pp-card-ttl{font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px;}
+.pp-status{font-size:.74rem;color:var(--muted);margin-top:6px;min-height:16px;}
+.pp-qr{display:flex;gap:4px;flex-wrap:wrap;}
+@media(max-width:1100px){.pp-cfg-grid{grid-template-columns:1fr 1fr 1fr;}.pp-body{grid-template-columns:1fr;}}
+
 /* ── Por Horário ─────────────────────────────────────── */
 .h-cfg{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:12px 16px;margin-bottom:12px;}
 .h-cfg-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr auto auto;gap:8px;align-items:end;}
@@ -265,6 +277,7 @@ tr.chope-sub:hover td{background:rgba(255,255,255,.035);}
   <div class="tab" onclick="switchTab('busca')">🔍 Busca de Produtos</div>
   <div class="tab" onclick="switchTab('comp')">📈 Comparativos</div>
   <div class="tab" onclick="switchTab('dash')">📊 Dashboard</div>
+  <div class="tab" onclick="switchTab('produto')">🔎 Por Produto</div>
   <div class="tab" onclick="switchTab('horario')">⏰ Por Horário</div>
 </div>
 
@@ -419,6 +432,70 @@ tr.chope-sub:hover td{background:rgba(255,255,255,.035);}
 </div>
 
 
+<!-- ════════════ POR PRODUTO ════════════ -->
+<div class="tab-content" id="tab-produto">
+
+  <div class="pp-cfg">
+    <div class="pp-cfg-grid">
+      <div>
+        <div class="cl">Produto (nome ou trecho)</div>
+        <input id="ppTermo" type="text" placeholder="ex: ESTRELLA GALICIA COPA P"
+          style="width:100%;background:var(--card);border:1px solid rgba(255,255,255,0.12);color:var(--text);padding:5px 9px;border-radius:6px;font-size:.83rem;outline:none;"
+          onkeydown="if(event.key==='Enter') buscarProduto()"
+          onfocus="this.style.borderColor='var(--amber)'" onblur="this.style.borderColor='rgba(255,255,255,0.12)'">
+      </div>
+      <div><div class="cl">Data início</div><input type="date" id="ppDtI" style="width:100%"></div>
+      <div><div class="cl">Data fim</div><input type="date" id="ppDtF" style="width:100%"></div>
+      <button class="btn btn-p" onclick="buscarProduto()">🔍 Buscar</button>
+      <button class="btn btn-s" id="btnPPCsv" onclick="exportPPXls()" disabled>📥 Excel</button>
+    </div>
+    <div class="pp-qr" style="margin-top:8px;">
+      <span style="font-size:.68rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;align-self:center;">Período:</span>
+      <button class="btn btn-s" onclick="setPPRange(30)">30d</button>
+      <button class="btn btn-s" onclick="setPPRange(60)">60d</button>
+      <button class="btn btn-s" onclick="setPPRange(90)">90d</button>
+      <button class="btn btn-s" onclick="setPPRangeMonth()">Mês atual</button>
+      <button class="btn btn-s" onclick="setPPRangeSince('2026-05-01')">Mai–hoje</button>
+    </div>
+    <div class="pp-status" id="ppStatus">Digite o nome do produto e selecione o período.</div>
+  </div>
+
+  <div class="pp-kpis">
+    <div class="kpi" style="--acc:#F5A623"><div class="kpi-ico">📦</div><div class="kpi-val" id="ppKQty">—</div><div class="kpi-lbl">Unidades vendidas</div></div>
+    <div class="kpi" style="--acc:#2196F3"><div class="kpi-ico">🏪</div><div class="kpi-val" id="ppKLojas">—</div><div class="kpi-lbl">Unidades com venda</div></div>
+    <div class="kpi" style="--acc:#4CAF50"><div class="kpi-ico">💰</div><div class="kpi-val" id="ppKFat">—</div><div class="kpi-lbl">Faturamento</div></div>
+  </div>
+
+  <div class="pp-body">
+    <div class="pp-card">
+      <div class="pp-card-ttl">Vendas por unidade</div>
+      <div style="position:relative;height:300px"><canvas id="ppChart"></canvas></div>
+    </div>
+    <div class="pp-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div class="pp-card-ttl" style="margin-bottom:0">Ranking por unidade</div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Unidade</th>
+              <th class="num">Qtd</th>
+              <th class="num">Faturamento</th>
+              <th class="num">% total</th>
+            </tr>
+          </thead>
+          <tbody id="ppTbody">
+            <tr><td colspan="4"><div class="empty"><div class="empty-ico">🔎</div><h3>Busque um produto</h3></div></td></tr>
+          </tbody>
+          <tfoot id="ppTfoot"></tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /tab-produto -->
+
 <!-- ════════════ POR HORÁRIO ════════════ -->
 <div class="tab-content" id="tab-horario">
 
@@ -543,6 +620,7 @@ function switchTab(id) {
   document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
   if (id === 'horario') initHorario();
+  if (id === 'produto') initProduto();
   const content=document.getElementById('tab-'+id);
   if(content) content.classList.add('active');
   const tabs=document.querySelectorAll('.tab');
@@ -673,19 +751,21 @@ function normList(raw) {
   }
   return [];
 }
-async function fetchLoja(id, dtI, dtF) {
-  const chunks=dateChunks(dtI,dtF);
-  let allRows=[];
-  for (const c of chunks) {
-    const url=`${ZIG_BASE}/erp/saida-produtos?loja=${id}&dtinicio=${c.start}&dtfim=${c.end}`;
-    console.log('[Brewteco] →',url);
-    const r=await fetch(url,{headers:ZIG_HDR()});
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    const raw=await r.json();
-    const rows=normList(raw);
-    console.log('[Brewteco] ←',rows.length,'itens');
-    allRows=allRows.concat(rows);
+// Bloco de 5 dias com muito movimento dá HTTP 400 ("mais de 5 eventos") — refaz dia a dia
+async function fetchBloco(id, ini, fim) {
+  const url=`${ZIG_BASE}/erp/saida-produtos?loja=${id}&dtinicio=${ini}&dtfim=${fim}`;
+  const r=await fetch(url,{headers:ZIG_HDR()});
+  if (r.ok) return normList(await r.json());
+  if (r.status===400 && ini!==fim) {
+    let rows=[];
+    for (const d of dateChunks(ini,fim,1)) rows=rows.concat(await fetchBloco(id,d.start,d.end));
+    return rows;
   }
+  throw new Error(`HTTP ${r.status}`);
+}
+async function fetchLoja(id, dtI, dtF) {
+  let allRows=[];
+  for (const c of dateChunks(dtI,dtF)) allRows=allRows.concat(await fetchBloco(id,c.start,c.end));
   return allRows;
 }
 
@@ -731,6 +811,13 @@ async function runDiag() {
         total+=rows2.length;
         if (!firstItem && rows2.length) firstItem=rows2[0];
         s+=`    Chunk ${i+1}: ${c.start}→${c.end}  HTTP ${r2.status}  ${rows2.length} reg ${r2.ok?'✅':'❌'}\n`;
+        if (r2.status===400) {
+          try {
+            const rec=await fetchBloco(loja?.id||'',c.start,c.end);
+            total+=rec.length;
+            s+=`      ↳ refeito dia a dia: ${rec.length} reg ✅\n`;
+          } catch(re){ s+=`      ↳ refeito dia a dia: ❌ ${re.message}\n`; }
+        }
       } catch(ce){ s+=`    Chunk ${i+1}: ${c.start}→${c.end}  ❌ ${ce.message}\n`; }
     }
     s+=`\n`;
@@ -1768,6 +1855,205 @@ function imprimirHorario() {
   if (!_horRaw.length) { alert('Busque os dados primeiro.'); return; }
   window.print();
 }
+
+// ══════════════════════════════════════════════════════════
+// POR PRODUTO — busca consolidada cross-store, períodos longos
+// ══════════════════════════════════════════════════════════
+var _ppRows = [];
+var _ppChart2 = null;
+var _ppInitDone = false;
+
+function initProduto() {
+  if (_ppInitDone) return;
+  _ppInitDone = true;
+  setPPRange(30);
+}
+
+function setPPRange(dias) {
+  var e = new Date(); var s = new Date(e);
+  s.setDate(s.getDate() - (dias - 1));
+  document.getElementById('ppDtI').value = toISO(s);
+  document.getElementById('ppDtF').value = toISO(e);
+}
+function setPPRangeMonth() {
+  var t = new Date();
+  var s = new Date(t.getFullYear(), t.getMonth(), 1);
+  document.getElementById('ppDtI').value = toISO(s);
+  document.getElementById('ppDtF').value = toISO(t);
+}
+function setPPRangeSince(desde) {
+  document.getElementById('ppDtI').value = desde;
+  document.getElementById('ppDtF').value = toISO(new Date());
+}
+
+function gerarChunksPP(ini, fim) {
+  var chunks = [], cur = new Date(ini + 'T00:00:00'), end = new Date(fim + 'T00:00:00');
+  while (cur <= end) {
+    var dtI = toISO(cur);
+    var next = new Date(cur); next.setDate(next.getDate() + 4);
+    var dtF = toISO(next > end ? end : next);
+    chunks.push({ dtI: dtI, dtF: dtF });
+    cur.setDate(cur.getDate() + 5);
+  }
+  return chunks;
+}
+
+async function buscarProduto() {
+  var termo = document.getElementById('ppTermo').value.trim().toUpperCase();
+  var dtI   = document.getElementById('ppDtI').value;
+  var dtF   = document.getElementById('ppDtF').value;
+  if (!termo) { alert('Digite o nome do produto'); return; }
+  if (!dtI || !dtF) { alert('Selecione o período'); return; }
+
+  var chunks = gerarChunksPP(dtI, dtF);
+  var acc = {};
+  LOJAS_FIXAS.forEach(function(l) { acc[l.id] = { name: l.name, qty: 0, fat: 0 }; });
+
+  var total = chunks.length * LOJAS_FIXAS.length;
+  var done = 0;
+
+  document.getElementById('ppStatus').textContent = 'Buscando... 0/' + total + ' requisicoes';
+  document.getElementById('ppTbody').innerHTML =
+    '<tr><td colspan="4" style="text-align:center;padding:30px;"><div class="spin" style="margin:0 auto"></div></td></tr>';
+  document.getElementById('ppTfoot').innerHTML = '';
+  document.getElementById('btnPPCsv').disabled = true;
+
+  await Promise.all(LOJAS_FIXAS.reduce(function(arr, loja) {
+    chunks.forEach(function(chunk) {
+      arr.push(
+        fetchBloco(loja.id, chunk.dtI, chunk.dtF)
+        .then(function(items) {
+            items.forEach(function(i) {
+              if (i.productName && i.productName.toUpperCase().includes(termo) && !i.isRefunded) {
+                acc[loja.id].qty += (i.count || 0);
+                acc[loja.id].fat += ((i.unitValue || 0) * (i.count || 0) - (i.discountValue || 0));
+              }
+            });
+        })
+        .catch(function() {})
+        .finally(function() {
+          done++;
+          if (done % 9 === 0 || done === total) {
+            document.getElementById('ppStatus').textContent = 'Buscando... ' + done + '/' + total + ' requisicoes';
+          }
+        })
+      );
+    });
+    return arr;
+  }, []));
+
+  _ppRows = Object.values(acc).filter(function(r) { return r.qty > 0; });
+  _ppRows.sort(function(a, b) { return b.qty - a.qty; });
+
+  var totQty = _ppRows.reduce(function(s, r) { return s + r.qty; }, 0);
+  var totFat = _ppRows.reduce(function(s, r) { return s + r.fat; }, 0);
+  var temFat = totFat > 100;
+
+  document.getElementById('ppKQty').textContent   = fN(totQty);
+  document.getElementById('ppKLojas').textContent  = _ppRows.length + ' / ' + LOJAS_FIXAS.length;
+  document.getElementById('ppKFat').textContent    = temFat ? fBRL(totFat) : '—';
+
+  document.getElementById('ppStatus').textContent =
+    _ppRows.length > 0
+      ? 'Total: ' + fN(totQty) + ' unidades em ' + _ppRows.length + ' unidade(s)' + (temFat ? ' · ' + fBRL(totFat) : ' · valor não disponível neste produto')
+      : 'Nenhuma venda encontrada para "' + termo + '" no período.';
+
+  // Tabela
+  var html = _ppRows.map(function(r) {
+    var pct = totQty > 0 ? (r.qty / totQty * 100).toFixed(1) : 0;
+    return '<tr>' +
+      '<td>' + esc(r.name) + '</td>' +
+      '<td class="num"><strong>' + fN(r.qty) + '</strong></td>' +
+      '<td class="num">' + (r.fat > 100 ? fBRL(r.fat) : '<span style="color:var(--muted)">—</span>') + '</td>' +
+      '<td class="num" style="min-width:90px">' + pct + '%' +
+        '<div style="height:4px;background:var(--border);border-radius:2px;margin-top:3px">' +
+          '<div style="height:4px;background:var(--amber);border-radius:2px;width:' + pct + '%"></div>' +
+        '</div></td>' +
+    '</tr>';
+  }).join('');
+
+  if (!html) html = '<tr><td colspan="4"><div class="empty"><div class="empty-ico">🔍</div>' +
+    '<h3>Nenhum resultado</h3><p style="font-size:.8rem;color:var(--muted)">Verifique o nome do produto ou amplie o período</p></div></td></tr>';
+
+  document.getElementById('ppTbody').innerHTML = html;
+  document.getElementById('ppTfoot').innerHTML = totQty > 0
+    ? '<tr style="background:var(--dark2);font-weight:700"><td>TOTAL</td>' +
+      '<td class="num">' + fN(totQty) + '</td>' +
+      '<td class="num">' + (temFat ? fBRL(totFat) : '—') + '</td><td></td></tr>'
+    : '';
+
+  document.getElementById('btnPPCsv').disabled = _ppRows.length === 0;
+
+  // Gráfico
+  if (_ppChart2) { _ppChart2.destroy(); _ppChart2 = null; }
+  if (_ppRows.length > 0) {
+    var ctx = document.getElementById('ppChart').getContext('2d');
+    _ppChart2 = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: _ppRows.map(function(r) { return r.name.replace('Brewteco ', ''); }),
+        datasets: [{
+          label: 'Unidades',
+          data: _ppRows.map(function(r) { return r.qty; }),
+          backgroundColor: PAL.slice(0, _ppRows.length),
+          borderRadius: 5
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { color: 'rgba(255,255,255,.05)' }, ticks: { color: '#8A8A9A' } },
+          y: { grid: { display: false }, ticks: { color: '#E0E0E0', font: { size: 11 } } }
+        }
+      }
+    });
+  }
+}
+
+function exportPPXls() {
+  if (!_ppRows.length) return;
+  var termo  = document.getElementById('ppTermo').value.trim();
+  var dtI    = document.getElementById('ppDtI').value;
+  var dtF    = document.getElementById('ppDtF').value;
+  var totQty = _ppRows.reduce(function(s,r){ return s+r.qty; },0);
+  var totFat = _ppRows.reduce(function(s,r){ return s+r.fat; },0);
+
+  // Monta dados da planilha
+  var wsData = [];
+  wsData.push(['Produto', termo]);
+  wsData.push(['Período', dtI + ' a ' + dtF]);
+  wsData.push([]);
+  wsData.push(['Unidade', 'Qtd', 'Faturamento (R$)', '% do Total']);
+  _ppRows.forEach(function(r) {
+    var pct = totQty > 0 ? parseFloat((r.qty / totQty * 100).toFixed(2)) : 0;
+    wsData.push([r.name, r.qty, parseFloat((r.fat / 100).toFixed(2)), pct]);
+  });
+  wsData.push(['TOTAL', totQty, parseFloat((totFat / 100).toFixed(2)), 100]);
+
+  var ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  // Largura das colunas
+  ws['!cols'] = [{ wch: 30 }, { wch: 10 }, { wch: 18 }, { wch: 12 }];
+
+  // Formato de moeda nas células de faturamento (coluna C, linhas de dados)
+  var startRow = 5; // linha 5 = índice 4 (0-based) → linha Excel 5
+  for (var i = 0; i < _ppRows.length + 1; i++) {
+    var cellRef = XLSX.utils.encode_cell({ r: startRow + i - 1, c: 2 });
+    if (ws[cellRef]) ws[cellRef].z = '"R$"#,##0.00';
+    var pctRef = XLSX.utils.encode_cell({ r: startRow + i - 1, c: 3 });
+    if (ws[pctRef]) ws[pctRef].z = '0.00"%"';
+  }
+
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Por Produto');
+
+  var nome = 'produto_' + termo.replace(/[\s\/]/g, '_') + '_' + dtI + '_' + dtF + '.xlsx';
+  XLSX.writeFile(wb, nome);
+}
+
+// ══════════════════════════════════════════════════════════
 
 document.addEventListener('DOMContentLoaded', async () => {
   setRange('today');
