@@ -371,11 +371,12 @@ tr.chope-sub:hover td{background:rgba(255,255,255,.035);}
             <th class="num" onclick="bSort('value')">Valor</th>
             <th class="num" onclick="bSort('pctGrupo')" title="% do faturamento da categoria">% Grupo</th>
             <th class="num" onclick="bSort('pctTotal')" title="% do faturamento total">% Total</th>
-            <th class="num">Estornos</th>
+            <th class="num" onclick="bSort('refundCount')" title="Itens cancelados/estornados na ZigPay (não estão na Qtd)">↩ Cancelados</th>
+            <th class="num" onclick="bSort('liquido')" title="Qtd vendida menos cancelados">Vendidos − cancelados</th>
           </tr>
         </thead>
         <tbody id="bTbody">
-          <tr><td colspan="10"><div class="empty"><div class="empty-ico">🔍</div><h3>Clique em Buscar</h3></div></td></tr>
+          <tr><td colspan="11"><div class="empty"><div class="empty-ico">🔍</div><h3>Clique em Buscar</h3></div></td></tr>
         </tbody>
         <tfoot id="bTfoot"></tfoot>
       </table>
@@ -752,20 +753,28 @@ function normList(raw) {
   return [];
 }
 // Bloco de 5 dias com muito movimento dá HTTP 400 ("mais de 5 eventos") — refaz dia a dia
-async function fetchBloco(id, ini, fim) {
-  const url=`${ZIG_BASE}/erp/saida-produtos?loja=${id}&dtinicio=${ini}&dtfim=${fim}`;
+// refunded=true traz SÓ os cancelados/estornados (a chamada normal não os inclui)
+async function fetchBloco(id, ini, fim, cancelados=false) {
+  const url=`${ZIG_BASE}/erp/saida-produtos?loja=${id}&dtinicio=${ini}&dtfim=${fim}${cancelados?'&refunded=true':''}`;
   const r=await fetch(url,{headers:ZIG_HDR()});
   if (r.ok) return normList(await r.json());
   if (r.status===400 && ini!==fim) {
     let rows=[];
-    for (const d of dateChunks(ini,fim,1)) rows=rows.concat(await fetchBloco(id,d.start,d.end));
+    for (const d of dateChunks(ini,fim,1)) rows=rows.concat(await fetchBloco(id,d.start,d.end,cancelados));
     return rows;
   }
   throw new Error(`HTTP ${r.status}`);
 }
 async function fetchLoja(id, dtI, dtF) {
   let allRows=[];
-  for (const c of dateChunks(dtI,dtF)) allRows=allRows.concat(await fetchBloco(id,c.start,c.end));
+  for (const c of dateChunks(dtI,dtF)) {
+    allRows=allRows.concat(await fetchBloco(id,c.start,c.end));
+    try {
+      const canc=await fetchBloco(id,c.start,c.end,true);
+      canc.forEach(x=>{ x.isRefunded=true; });
+      allRows=allRows.concat(canc);
+    } catch(e) { console.warn('[Brewteco] cancelados indisponíveis',c.start,c.end,e.message); }
+  }
   return allRows;
 }
 
@@ -1195,6 +1204,7 @@ function buildBuscaRows() {
   });
   buscaRows=Object.values(map).map(r=>({
     ...r,
+    liquido:r.count-r.refundCount,
     pctGrupo:catMap[r.productCategory]>0?r.value/catMap[r.productCategory]*100:0,
     pctTotal:totalFatAll>0?r.value/totalFatAll*100:0,
     isAlimento:ALIMENTOS_MONITOR.some(a=>r.productName.includes(a)),
@@ -1289,10 +1299,11 @@ function renderBusca() {
   const totCount=rows.reduce((s,r)=>s+r.count,0);
   const totVal  =rows.reduce((s,r)=>s+r.value,0);
   const totLit  =rows.reduce((s,r)=>s+r.litros,0);
+  const totRef  =rows.reduce((s,r)=>s+r.refundCount,0);
 
   const tbody=document.getElementById('bTbody');
   if(!page.length){
-    tbody.innerHTML='<tr><td colspan="10"><div class="empty"><div class="empty-ico">🔍</div><h3>Nenhum produto encontrado</h3></div></td></tr>';
+    tbody.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-ico">🔍</div><h3>Nenhum produto encontrado</h3></div></td></tr>';
     document.getElementById('bTfoot').innerHTML='';
     return;
   }
@@ -1321,7 +1332,8 @@ function renderBusca() {
       <td class="num">${fBRL(r.value)}</td>
       <td class="num">${fP(r.pctGrupo)}</td>
       <td class="num">${fP(r.pctTotal)}</td>
-      <td class="num">${r.refundCount>0?'<span style="color:#EF5350;">-'+fN(r.refundCount)+'</span>':'—'}</td>
+      <td class="num">${r.refundCount>0?'<span style="color:#EF5350;" title="cancelados/estornados">↩ '+fN(r.refundCount)+'</span>':'—'}</td>
+      <td class="num" style="font-weight:700;">${fN(r.liquido)}</td>
     </tr>`;
 
     if(!expanded) return mainRow;
@@ -1372,7 +1384,7 @@ function renderBusca() {
           <td class="num" style="color:${col}80;">0 un.</td>
           <td class="num">—</td>
           <td class="num" style="color:${col}80;">R$ 0,00</td>
-          <td colspan="3"></td>
+          <td colspan="4"></td>
         </tr>`;
       }).join('');
     } else {
@@ -1387,7 +1399,7 @@ function renderBusca() {
           <td class="num" style="color:${col};font-weight:700;">${fN(e.p*e.pedidos)} un.</td>
           <td class="num">—</td>
           <td class="num" style="color:${col};font-weight:700;">${fBRL(e.value)}</td>
-          <td colspan="3"></td>
+          <td colspan="4"></td>
         </tr>`;
       }).join('');
     }
@@ -1403,7 +1415,8 @@ function renderBusca() {
     <td class="num">${fBRL(totVal)}</td>
     <td class="num" style="color:var(--amber);">${fP(pctSel)}<span style="font-size:.65rem;font-weight:400;display:block;opacity:.6;">do total</span></td>
     <td class="num"></td>
-    <td></td>
+    <td class="num" style="color:#EF5350;">${totRef>0?'↩ '+fN(totRef):'—'}</td>
+    <td class="num">${fN(totCount-totRef)}</td>
   </tr>`;
 }
 
@@ -1424,14 +1437,14 @@ function exportCSV() {
   let rows=[...buscaRows];
   if (allTags.length) rows=rows.filter(r=>allTags.every(t=>r.productName.includes(t)||r.productCategory.toUpperCase().includes(t)||r.barName.toUpperCase().includes(t)));
   rows.sort((a,b)=>{ const av=a[bSortCol]??'',bv=b[bSortCol]??''; return typeof av==='string'?bSortDir*av.localeCompare(bv,'pt-BR'):bSortDir*(bv-av); });
-  const hdr='Produto,Categoria,Bar,Evento,Qtd,Litros,Valor (R$),"% Grupo","% Total",Estornos\n';
+  const hdr='Produto,Categoria,Bar,Evento,Qtd,Litros,Valor (R$),"% Grupo","% Total",Cancelados,"Vendidos - cancelados"\n';
   const body=rows.map(r=>[
     '"'+r.productName.replace(/"/g,'""')+'"',
     '"'+r.productCategory.replace(/"/g,'""')+'"',
     '"'+r.barName.replace(/"/g,'""')+'"',
     '"'+(r.eventName||'').replace(/"/g,'""')+'"',
     r.count, r.litros.toFixed(3), (r.value/100).toFixed(2),
-    r.pctGrupo.toFixed(2), r.pctTotal.toFixed(2), r.refundCount
+    r.pctGrupo.toFixed(2), r.pctTotal.toFixed(2), r.refundCount, r.liquido
   ].join(',')).join('\n');
   const blob=new Blob(['﻿'+hdr+body],{type:'text/csv;charset=utf-8;'});
   const url=URL.createObjectURL(blob);
