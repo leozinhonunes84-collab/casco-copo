@@ -279,6 +279,7 @@ tr.chope-sub:hover td{background:rgba(255,255,255,.035);}
   <div class="tab" onclick="switchTab('dash')">📊 Dashboard</div>
   <div class="tab" onclick="switchTab('produto')">🔎 Por Produto</div>
   <div class="tab" onclick="switchTab('horario')">⏰ Por Horário</div>
+  <div class="tab" onclick="switchTab('romaneio')">📦 Sugestão de romaneio</div>
 </div>
 
 <main>
@@ -367,6 +368,7 @@ tr.chope-sub:hover td{background:rgba(255,255,255,.035);}
             <th onclick="bSort('barName')">Bar</th>
             <th onclick="bSort('eventName')">Evento</th>
             <th class="num" onclick="bSort('count')">Qtd</th>
+            <th class="num" onclick="bSort('unidades')" title="Montável: soma das unidades de cada pacote (2 un., 4 un.). Demais: igual à Qtd">Unidades</th>
             <th class="num" onclick="bSort('litros')">Litros</th>
             <th class="num" onclick="bSort('value')">Valor</th>
             <th class="num" onclick="bSort('pctGrupo')" title="% do faturamento da categoria">% Grupo</th>
@@ -376,7 +378,7 @@ tr.chope-sub:hover td{background:rgba(255,255,255,.035);}
           </tr>
         </thead>
         <tbody id="bTbody">
-          <tr><td colspan="11"><div class="empty"><div class="empty-ico">🔍</div><h3>Clique em Buscar</h3></div></td></tr>
+          <tr><td colspan="12"><div class="empty"><div class="empty-ico">🔍</div><h3>Clique em Buscar</h3></div></td></tr>
         </tbody>
         <tfoot id="bTfoot"></tfoot>
       </table>
@@ -496,6 +498,29 @@ tr.chope-sub:hover td{background:rgba(255,255,255,.035);}
   </div>
 
 </div><!-- /tab-produto -->
+
+<!-- ════════════ SUGESTÃO DE ROMANEIO ════════════ -->
+<div class="tab-content" id="tab-romaneio">
+  <div class="tc">
+    <div class="th">
+      <span class="tt">📦 Sugestão de romaneio da semana</span>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <button class="btn btn-p" id="btnRom" onclick="loadRomaneio()">Calcular</button>
+        <button class="btn btn-s" onclick="exportRomaneio()">⬇ CSV</button>
+      </div>
+    </div>
+    <div id="romInfo" style="font-size:.75rem;color:var(--muted);padding:0 16px 8px;">
+      Petiscos em pacote de 2/4 (unidades) · vendas ZigPay das últimas 6 semanas completas (seg–dom) · todas as unidades, menos Rufi, Morro da Urca e Ferradura (escolha a unidade nos botões) · sugestão = média semanal arredondada pra cima.
+    </div>
+    <div id="romLojas" style="display:flex;gap:5px;flex-wrap:wrap;padding:0 16px 10px;"></div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead id="romThead"></thead>
+        <tbody id="romTbody"><tr><td><div class="empty"><div class="empty-ico">📦</div><h3>Clique em Calcular</h3></div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
 <!-- ════════════ POR HORÁRIO ════════════ -->
 <div class="tab-content" id="tab-horario">
@@ -1210,6 +1235,7 @@ function buildBuscaRows() {
     isAlimento:ALIMENTOS_MONITOR.some(a=>r.productName.includes(a)),
     alimentoKey:ALIMENTOS_MONITOR.find(a=>r.productName.includes(a))||null,
   }));
+  buscaRows.forEach(r=>{ r.unidades=unidadesDe(r); });
   catTotals=catMap;
 }
 
@@ -1246,6 +1272,152 @@ function _renderBTagUI() {
 function toggleBusca(key) {
   if(bExpandedAlim.has(key)) bExpandedAlim.delete(key); else bExpandedAlim.add(key);
   renderBusca();
+}
+
+// Pacotes de 2/4 unidades do alimento monitorado, no bar da linha
+function packEntries(r) {
+  const byPack={};
+  rawData.forEach(x=>{
+    if (x.isRefunded) return;
+    const nm=(x.productName||'').trim().toUpperCase();
+    if (!nm.includes(r.alimentoKey) || (x._loja||'')!==(r.barName||'')) return;
+    const c=x.count||1;
+    let ps=0;
+    const mN=nm.match(/\b([24])\s*(UNID(?:ADES?)?|UN\b|X\b|PCS?)?(?:\s|$)/i);
+    if(mN) ps=parseInt(mN[1]);
+    if(!ps && x.additions && x.additions.length){
+      for(const add of x.additions){
+        const mA=(add.name||'').toUpperCase().match(/\b([24])\s*(UNID(?:ADES?)?|UN\b|X\b|PCS?)?(?:\s|$)/i);
+        if(mA){ps=parseInt(mA[1]);break;}
+      }
+    }
+    if(!ps&&(c===2||c===4)) ps=c;
+    if(!ps) return;
+    if(!byPack[ps]) byPack[ps]={pedidos:0,value:0};
+    byPack[ps].pedidos++;
+    byPack[ps].value+=Math.max(0,(x.unitValue||0)*c-(x.discountValue||0));
+  });
+  return Object.entries(byPack).map(([p,d])=>({p:+p,...d})).sort((a,b)=>a.p-b.p);
+}
+// Montável (alimento em pacotes): soma das unidades de cada pacote; senão, a Qtd
+function unidadesDe(r) {
+  if (r.isAlimento && r.productName===r.alimentoKey) {
+    const ent=packEntries(r);
+    if (ent.length) return ent.reduce((s,e)=>s+e.p*e.pedidos,0);
+  }
+  return r.count;
+}
+
+// ─── Sugestão de romaneio ─────────────────────────────────────────────────────
+// Unidades vendidas por semana (6 semanas seg–dom) dos alimentos em pacote; sugestão = média ↑
+let romRows=[], romSemanas=[], romLoja='TODAS', romFalhas=[];
+function setRomLoja(l){ romLoja=l; renderRomaneio(); }
+function romUnidades(x) {
+  const nm=(x.productName||'').trim().toUpperCase();
+  const c=x.count||1;
+  const re=/\b([24])\s*(UNID(?:ADES?)?|UN\b|X\b|PCS?)?(?:\s|$)/i;
+  let m=nm.match(re);
+  if(!m && x.additions) for(const a of x.additions){ m=(a.name||'').toUpperCase().match(re); if(m) break; }
+  if(m) return parseInt(m[1]);
+  return c;
+}
+async function loadRomaneio() {
+  const btn=document.getElementById('btnRom');
+  const tb=document.getElementById('romTbody');
+  const hoje=new Date(); hoje.setHours(0,0,0,0);
+  const dow=(hoje.getDay()+6)%7;               // 0 = segunda
+  const fimUlt=new Date(hoje); fimUlt.setDate(hoje.getDate()-dow-1); // último domingo
+  romSemanas=[];
+  for(let i=5;i>=0;i--){
+    const f=new Date(fimUlt); f.setDate(fimUlt.getDate()-7*i);
+    const s=new Date(f); s.setDate(f.getDate()-6);
+    romSemanas.push({start:toISO(s),end:toISO(f)});
+  }
+  // Rufi, Morro da Urca e Ferradura não entram no romaneio
+  const targets=LOJAS_FIXAS.filter(l=>!/rufi|morro da urca|ferradura/i.test(l.name));
+  btn.disabled=true;
+  tb.innerHTML=`<tr><td><div class="empty"><h3>Consultando ZigPay (${targets.length} unidades, 6 semanas — pode levar alguns minutos)…</h3></div></td></tr>`;
+  const map={}; const falhas=[]; const okSem={};
+  const semana=async(l,sem)=>{
+    for(let t=0;t<4;t++){
+      try{
+        let rows=[];
+        for(const c of dateChunks(sem.start,sem.end)) rows=rows.concat(await fetchBloco(l.id,c.start,c.end));
+        return rows;
+      }catch(e){ await new Promise(r=>setTimeout(r,1500*(t+1))); }
+    }
+    return null;
+  };
+  const fila=[...targets]; let feitas=0;
+  const worker=async()=>{
+    while(fila.length){
+      const l=fila.shift();
+      okSem[l.name]=[];
+      for(let w=0;w<romSemanas.length;w++){
+        const rows=await semana(l,romSemanas[w]);
+        if(!rows){ falhas.push(`${l.name} ${romSemanas[w].start}`); continue; }
+        okSem[l.name].push(w);
+        rows.forEach(x=>{
+          const nm=(x.productName||'').trim().toUpperCase();
+          const k=ALIMENTOS_MONITOR.find(a=>nm.includes(a));
+          if(!k) return;
+          const key=l.name+'~~'+k;
+          if(!map[key]) map[key]={loja:l.name,produto:k,sem:[0,0,0,0,0,0]};
+          map[key].sem[w]+=romUnidades(x);
+        });
+      }
+      tb.innerHTML=`<tr><td><div class="empty"><h3>Consultando ZigPay… ${++feitas}/${targets.length} unidades</h3></div></td></tr>`;
+    }
+  };
+  await Promise.all([worker(),worker(),worker()]);
+  romRows=Object.values(map).map(r=>{
+    const ok=okSem[r.loja]||[];
+    r.falhou=romSemanas.map((_,i)=>!ok.includes(i));
+    const vals=ok.map(i=>r.sem[i]);
+    const media=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0;
+    return {...r,media,max:Math.max(0,...vals),sugestao:Math.ceil(media)};
+  }).sort((a,b)=>a.loja.localeCompare(b.loja)||a.produto.localeCompare(b.produto));
+  btn.disabled=false;
+  romFalhas=falhas;
+  renderRomaneio();
+}
+function romVisiveis() {
+  if(romLoja!=='TODAS') return romRows.filter(r=>r.loja===romLoja);
+  // Todas: soma das unidades por petisco
+  const m={};
+  romRows.forEach(r=>{
+    if(!m[r.produto]) m[r.produto]={loja:'Todas as unidades',produto:r.produto,sem:[0,0,0,0,0,0],media:0,sugestao:0};
+    r.sem.forEach((v,i)=>m[r.produto].sem[i]+=v);
+    m[r.produto].media+=r.media; m[r.produto].sugestao+=r.sugestao;
+  });
+  return Object.values(m).map(r=>({...r,max:Math.max(...r.sem)}));
+}
+function renderRomaneio() {
+  const falhas=romFalhas;
+  const fd=d=>d.slice(8,10)+'/'+d.slice(5,7);
+  const lojasCom=[...new Set(romRows.map(r=>r.loja))];
+  document.getElementById('romLojas').innerHTML=['TODAS',...lojasCom].map(l=>
+    `<button class="btn ${l===romLoja?'btn-p':'btn-s'}" style="padding:4px 10px;font-size:.75rem" onclick="setRomLoja('${esc(l)}')">${l==='TODAS'?'Todas (soma)':esc(l)}</button>`).join('');
+  const linhas=romVisiveis();
+  document.getElementById('romThead').innerHTML='<tr><th>Loja</th><th>Petisco</th>'+
+    romSemanas.map(s=>`<th style="text-align:right">${fd(s.start)}–${fd(s.end)}</th>`).join('')+
+    '<th style="text-align:right">Média</th><th style="text-align:right">Maior</th><th style="text-align:right;color:var(--amber)">Sugestão (un)</th></tr>';
+  const tb=document.getElementById('romTbody');
+  if(!linhas.length){ tb.innerHTML='<tr><td colspan="11"><div class="empty"><h3>Nenhuma venda desses petiscos no período</h3></div></td></tr>'; }
+  else tb.innerHTML=linhas.map(r=>`<tr><td>${esc(r.loja)}</td><td>${esc(r.produto)}</td>`+
+    r.sem.map((v,i)=>`<td style="text-align:right">${r.falhou&&r.falhou[i]?'<span style="color:#f44336" title="ZigPay não respondeu">⚠</span>':fN(v)}</td>`).join('')+
+    `<td style="text-align:right">${r.media.toFixed(1).replace('.',',')}</td><td style="text-align:right">${fN(r.max)}</td>`+
+    `<td style="text-align:right;font-weight:800;color:var(--amber)">${fN(r.sugestao)}</td></tr>`).join('');
+  document.getElementById('romInfo').innerHTML=`Semanas de ${fd(romSemanas[0].start)} a ${fd(romSemanas[5].end)} · unidades (pacote de 2/4 somado) · sugestão = média semanal arredondada pra cima.`+
+    (falhas.length?` <span style="color:#f44336">⚠ ${falhas.length} semana(s) sem resposta da ZigPay: ${esc(falhas.join(', '))}</span>`:'');
+}
+function exportRomaneio() {
+  if(!romRows.length) return;
+  const h=['Loja','Petisco',...romSemanas.map(s=>s.start+' a '+s.end),'Media','Maior','Sugestao'];
+  const lines=[h.join(';'),...romRows.map(r=>[r.loja,r.produto,...r.sem,r.media.toFixed(1).replace('.',','),r.max,r.sugestao].join(';'))];
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['﻿'+lines.join('\n')],{type:'text/csv'}));
+  a.download='sugestao_romaneio_'+toISO(new Date())+'.csv'; a.click();
 }
 
 // ─── Render busca ─────────────────────────────────────────────────────────────
@@ -1303,7 +1475,7 @@ function renderBusca() {
 
   const tbody=document.getElementById('bTbody');
   if(!page.length){
-    tbody.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-ico">🔍</div><h3>Nenhum produto encontrado</h3></div></td></tr>';
+    tbody.innerHTML='<tr><td colspan="12"><div class="empty"><div class="empty-ico">🔍</div><h3>Nenhum produto encontrado</h3></div></td></tr>';
     document.getElementById('bTfoot').innerHTML='';
     return;
   }
@@ -1328,6 +1500,7 @@ function renderBusca() {
       <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(r.barName)}">${esc(r.barName.replace('Brewteco ',''))}</td>
       <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.71rem;color:var(--muted);" title="${esc(r.eventName||'')}">${esc(r.eventName||'—')}</td>
       <td class="num">${fN(r.count)}</td>
+      <td class="num" style="font-weight:700;">${fN(r.unidades)}</td>
       <td class="num">${r.litros>0?fL(r.litros):'—'}</td>
       <td class="num">${fBRL(r.value)}</td>
       <td class="num">${fP(r.pctGrupo)}</td>
@@ -1338,38 +1511,7 @@ function renderBusca() {
 
     if(!expanded) return mainRow;
 
-    // Detecta pack pelo NOME do sub-produto (ex: "CROQUETE COSTELA 2 UNIDADES")
-    // e como fallback pelo count da transação — filtra pelo bar específico
-    const txns=rawData.filter(x=>!x.isRefunded &&
-      (x.productName||'').trim().toUpperCase().includes(r.alimentoKey) &&
-      (x._loja||'')===(r.barName||''));
-
-    const byPack={};
-    txns.forEach(x=>{
-      const nm=(x.productName||'').trim().toUpperCase();
-      const c=x.count||1;
-      let ps=0;
-      // 1) detecta número no nome do produto: "2 UNIDADES", "4UN", etc.
-      const mN=nm.match(/\b([24])\s*(UNID(?:ADES?)?|UN\b|X\b|PCS?)?(?:\s|$)/i);
-      if(mN) ps=parseInt(mN[1]);
-      // 2) verifica additions (variações do produto no Zig)
-      if(!ps && x.additions && x.additions.length){
-        for(const add of x.additions){
-          const aN=(add.name||'').toUpperCase();
-          const mA=aN.match(/\b([24])\s*(UNID(?:ADES?)?|UN\b|X\b|PCS?)?(?:\s|$)/i);
-          if(mA){ps=parseInt(mA[1]);break;}
-        }
-      }
-      // 3) fallback: count da transação
-      if(!ps&&(c===2||c===4)) ps=c;
-      if(!ps) return;
-      if(!byPack[ps]) byPack[ps]={pedidos:0,value:0};
-      byPack[ps].pedidos++;
-      byPack[ps].value+=Math.max(0,(x.unitValue||0)*c-(x.discountValue||0));
-    });
-    const entries=Object.entries(byPack)
-      .map(([p,d])=>({p:+p,...d}))
-      .sort((a,b)=>a.p-b.p);
+    const entries=packEntries(r);
 
     let subHtml='';
     if(!entries.length){
@@ -1382,6 +1524,7 @@ function renderBusca() {
             ↳ ${label}</td>
           <td colspan="3" style="font-size:.75rem;color:var(--muted);">0 pedido(s)</td>
           <td class="num" style="color:${col}80;">0 un.</td>
+          <td></td>
           <td class="num">—</td>
           <td class="num" style="color:${col}80;">R$ 0,00</td>
           <td colspan="4"></td>
@@ -1397,6 +1540,7 @@ function renderBusca() {
           <td colspan="3" style="font-size:.75rem;color:var(--muted);">
             ${fN(e.pedidos)} pedido(s)</td>
           <td class="num" style="color:${col};font-weight:700;">${fN(e.p*e.pedidos)} un.</td>
+          <td></td>
           <td class="num">—</td>
           <td class="num" style="color:${col};font-weight:700;">${fBRL(e.value)}</td>
           <td colspan="4"></td>
@@ -1411,6 +1555,7 @@ function renderBusca() {
   document.getElementById('bTfoot').innerHTML=`<tr style="font-weight:700;background:rgba(245,166,35,.07);">
     <td colspan="4">Total (${total} linha${total!==1?'s':''})</td>
     <td class="num">${fN(totCount)}</td>
+    <td class="num">${fN(rows.reduce((s,r)=>s+r.unidades,0))}</td>
     <td class="num">${totLit>0?fL(totLit):'—'}</td>
     <td class="num">${fBRL(totVal)}</td>
     <td class="num" style="color:var(--amber);">${fP(pctSel)}<span style="font-size:.65rem;font-weight:400;display:block;opacity:.6;">do total</span></td>
@@ -1437,13 +1582,13 @@ function exportCSV() {
   let rows=[...buscaRows];
   if (allTags.length) rows=rows.filter(r=>allTags.every(t=>r.productName.includes(t)||r.productCategory.toUpperCase().includes(t)||r.barName.toUpperCase().includes(t)));
   rows.sort((a,b)=>{ const av=a[bSortCol]??'',bv=b[bSortCol]??''; return typeof av==='string'?bSortDir*av.localeCompare(bv,'pt-BR'):bSortDir*(bv-av); });
-  const hdr='Produto,Categoria,Bar,Evento,Qtd,Litros,Valor (R$),"% Grupo","% Total",Cancelados,"Vendidos - cancelados"\n';
+  const hdr='Produto,Categoria,Bar,Evento,Qtd,Unidades,Litros,Valor (R$),"% Grupo","% Total",Cancelados,"Vendidos - cancelados"\n';
   const body=rows.map(r=>[
     '"'+r.productName.replace(/"/g,'""')+'"',
     '"'+r.productCategory.replace(/"/g,'""')+'"',
     '"'+r.barName.replace(/"/g,'""')+'"',
     '"'+(r.eventName||'').replace(/"/g,'""')+'"',
-    r.count, r.litros.toFixed(3), (r.value/100).toFixed(2),
+    r.count, r.unidades, r.litros.toFixed(3), (r.value/100).toFixed(2),
     r.pctGrupo.toFixed(2), r.pctTotal.toFixed(2), r.refundCount, r.liquido
   ].join(',')).join('\n');
   const blob=new Blob(['﻿'+hdr+body],{type:'text/csv;charset=utf-8;'});
