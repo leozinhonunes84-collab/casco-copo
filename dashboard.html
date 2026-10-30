@@ -1291,10 +1291,11 @@ function packEntries(r) {
         if(mA){ps=parseInt(mA[1]);break;}
       }
     }
-    if(!ps&&(c===2||c===4)) ps=c;
+    let qtdPacotes=c;                 // ex.: count 3 com pacote de 4 = 3 pacotes
+    if(!ps&&(c===2||c===4)) { ps=c; qtdPacotes=1; }
     if(!ps) return;
     if(!byPack[ps]) byPack[ps]={pedidos:0,value:0};
-    byPack[ps].pedidos++;
+    byPack[ps].pedidos+=qtdPacotes;
     byPack[ps].value+=Math.max(0,(x.unitValue||0)*c-(x.discountValue||0));
   });
   return Object.entries(byPack).map(([p,d])=>({p:+p,...d})).sort((a,b)=>a.p-b.p);
@@ -1318,7 +1319,7 @@ function romUnidades(x) {
   const re=/\b([24])\s*(UNID(?:ADES?)?|UN\b|X\b|PCS?)?(?:\s|$)/i;
   let m=nm.match(re);
   if(!m && x.additions) for(const a of x.additions){ m=(a.name||'').toUpperCase().match(re); if(m) break; }
-  if(m) return parseInt(m[1]);
+  if(m) return parseInt(m[1])*c;   // ex.: 3 pacotes de 4 = 12 unidades
   return c;
 }
 async function loadRomaneio() {
