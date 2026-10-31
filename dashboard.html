@@ -512,6 +512,10 @@ tr.chope-sub:hover td{background:rgba(255,255,255,.035);}
     <div id="romInfo" style="font-size:.75rem;color:var(--muted);padding:0 16px 8px;">
       Petiscos em pacote de 2/4 (unidades) · vendas ZigPay das últimas 6 semanas completas (seg–dom) · todas as unidades, menos Rufi, Morro da Urca e Ferradura (escolha a unidade nos botões) · sugestão = média semanal arredondada pra cima.
     </div>
+    <div style="display:flex;gap:18px;flex-wrap:wrap;padding:0 16px 12px;font-size:.8rem;">
+      <div><div class="cl" style="margin-bottom:5px;">Unidades</div><div id="romSelLojas" style="display:flex;gap:5px;flex-wrap:wrap;"></div></div>
+      <div><div class="cl" style="margin-bottom:5px;">Petiscos</div><div id="romSelProd" style="display:flex;gap:5px;flex-wrap:wrap;"></div></div>
+    </div>
     <div id="romLojas" style="display:flex;gap:5px;flex-wrap:wrap;padding:0 16px 10px;"></div>
     <div style="overflow-x:auto;">
       <table>
@@ -647,6 +651,7 @@ function switchTab(id) {
   document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
   if (id === 'horario') initHorario();
   if (id === 'produto') initProduto();
+  if (id === 'romaneio') initRomSel();
   const content=document.getElementById('tab-'+id);
   if(content) content.classList.add('active');
   const tabs=document.querySelectorAll('.tab');
@@ -1202,7 +1207,7 @@ function toggleExpand(ri) {
 
 // ─── Alimentos monitorados ────────────────────────────────────────────────────
 // Esses produtos são vendidos em packs de 2 ou 4 unidades — fique de olho!
-const ALIMENTOS_MONITOR=['COXINHA SARADA','CROQUETE COSTELA','COCRETE','BOLINHO ARROZ'];
+const ALIMENTOS_MONITOR=['COXINHA SARADA','CROQUETE COSTELA','COCRETI','BOLINHO ARROZ'];
 
 // ─── Build busca rows ─────────────────────────────────────────────────────────
 function buildBuscaRows() {
@@ -1313,6 +1318,14 @@ function unidadesDe(r) {
 // Unidades vendidas por semana (6 semanas seg–dom) dos alimentos em pacote; sugestão = média ↑
 let romRows=[], romSemanas=[], romLoja='TODAS', romFalhas=[];
 function setRomLoja(l){ romLoja=l; renderRomaneio(); }
+// Rufi, Morro da Urca e Ferradura não entram no romaneio
+const ROM_LOJAS=LOJAS_FIXAS.filter(l=>!/rufi|morro da urca|ferradura/i.test(l.name));
+function initRomSel() {
+  if(document.getElementById('romSelLojas').children.length) return;
+  const chk=(cls,v,lbl)=>`<label class="sz-tgl"><input type="checkbox" class="${cls}" value="${esc(v)}" checked> ${esc(lbl)}</label>`;
+  document.getElementById('romSelLojas').innerHTML=ROM_LOJAS.map(l=>chk('romChkLoja',l.id,l.name.replace('Brewteco ',''))).join('');
+  document.getElementById('romSelProd').innerHTML=ALIMENTOS_MONITOR.map(a=>chk('romChkProd',a,a)).join('');
+}
 function romUnidades(x) {
   const nm=(x.productName||'').trim().toUpperCase();
   const c=x.count||1;
@@ -1334,8 +1347,12 @@ async function loadRomaneio() {
     const s=new Date(f); s.setDate(f.getDate()-6);
     romSemanas.push({start:toISO(s),end:toISO(f)});
   }
-  // Rufi, Morro da Urca e Ferradura não entram no romaneio
-  const targets=LOJAS_FIXAS.filter(l=>!/rufi|morro da urca|ferradura/i.test(l.name));
+  initRomSel();
+  const ids=[...document.querySelectorAll('.romChkLoja:checked')].map(c=>c.value);
+  const prods=[...document.querySelectorAll('.romChkProd:checked')].map(c=>c.value);
+  const targets=ROM_LOJAS.filter(l=>ids.includes(l.id));
+  if(!targets.length||!prods.length){ alert('Marque pelo menos uma unidade e um petisco.'); return; }
+  romLoja='TODAS';
   btn.disabled=true;
   tb.innerHTML=`<tr><td><div class="empty"><h3>Consultando ZigPay (${targets.length} unidades, 6 semanas — pode levar alguns minutos)…</h3></div></td></tr>`;
   const map={}; const falhas=[]; const okSem={};
@@ -1360,11 +1377,13 @@ async function loadRomaneio() {
         okSem[l.name].push(w);
         rows.forEach(x=>{
           const nm=(x.productName||'').trim().toUpperCase();
-          const k=ALIMENTOS_MONITOR.find(a=>nm.includes(a));
+          const k=prods.find(a=>nm.includes(a));
           if(!k) return;
           const key=l.name+'~~'+k;
-          if(!map[key]) map[key]={loja:l.name,produto:k,sem:[0,0,0,0,0,0]};
-          map[key].sem[w]+=romUnidades(x);
+          if(!map[key]) map[key]={loja:l.name,produto:k,sem:[0,0,0,0,0,0],bv:0};
+          const u=romUnidades(x);
+          map[key].sem[w]+=u;
+          if(/^BV\b/.test(nm)) map[key].bv+=u;   // avulsos BV (já incluídos nas semanas)
         });
       }
       tb.innerHTML=`<tr><td><div class="empty"><h3>Consultando ZigPay… ${++feitas}/${targets.length} unidades</h3></div></td></tr>`;
@@ -1387,8 +1406,9 @@ function romVisiveis() {
   // Todas: soma das unidades por petisco
   const m={};
   romRows.forEach(r=>{
-    if(!m[r.produto]) m[r.produto]={loja:'Todas as unidades',produto:r.produto,sem:[0,0,0,0,0,0],media:0,sugestao:0};
+    if(!m[r.produto]) m[r.produto]={loja:'Todas as unidades',produto:r.produto,sem:[0,0,0,0,0,0],media:0,sugestao:0,bv:0};
     r.sem.forEach((v,i)=>m[r.produto].sem[i]+=v);
+    m[r.produto].bv+=r.bv;
     m[r.produto].media+=r.media; m[r.produto].sugestao+=r.sugestao;
   });
   return Object.values(m).map(r=>({...r,max:Math.max(...r.sem)}));
@@ -1402,20 +1422,20 @@ function renderRomaneio() {
   const linhas=romVisiveis();
   document.getElementById('romThead').innerHTML='<tr><th>Loja</th><th>Petisco</th>'+
     romSemanas.map(s=>`<th style="text-align:right">${fd(s.start)}–${fd(s.end)}</th>`).join('')+
-    '<th style="text-align:right">Média</th><th style="text-align:right">Maior</th><th style="text-align:right;color:var(--amber)">Sugestão (un)</th></tr>';
+    '<th style="text-align:right">Média</th><th style="text-align:right">Maior</th><th style="text-align:right" title="Unidades avulsas BV nas 6 semanas (já somadas nas semanas)">BV (6 sem.)</th><th style="text-align:right;color:var(--amber)">Sugestão (un)</th></tr>';
   const tb=document.getElementById('romTbody');
-  if(!linhas.length){ tb.innerHTML='<tr><td colspan="11"><div class="empty"><h3>Nenhuma venda desses petiscos no período</h3></div></td></tr>'; }
+  if(!linhas.length){ tb.innerHTML='<tr><td colspan="12"><div class="empty"><h3>Nenhuma venda desses petiscos no período</h3></div></td></tr>'; }
   else tb.innerHTML=linhas.map(r=>`<tr><td>${esc(r.loja)}</td><td>${esc(r.produto)}</td>`+
     r.sem.map((v,i)=>`<td style="text-align:right">${r.falhou&&r.falhou[i]?'<span style="color:#f44336" title="ZigPay não respondeu">⚠</span>':fN(v)}</td>`).join('')+
-    `<td style="text-align:right">${r.media.toFixed(1).replace('.',',')}</td><td style="text-align:right">${fN(r.max)}</td>`+
+    `<td style="text-align:right">${r.media.toFixed(1).replace('.',',')}</td><td style="text-align:right">${fN(r.max)}</td><td style="text-align:right;color:var(--muted)">${r.bv?fN(r.bv):'—'}</td>`+
     `<td style="text-align:right;font-weight:800;color:var(--amber)">${fN(r.sugestao)}</td></tr>`).join('');
   document.getElementById('romInfo').innerHTML=`Semanas de ${fd(romSemanas[0].start)} a ${fd(romSemanas[5].end)} · unidades (pacote de 2/4 somado) · sugestão = média semanal arredondada pra cima.`+
     (falhas.length?` <span style="color:#f44336">⚠ ${falhas.length} semana(s) sem resposta da ZigPay: ${esc(falhas.join(', '))}</span>`:'');
 }
 function exportRomaneio() {
   if(!romRows.length) return;
-  const h=['Loja','Petisco',...romSemanas.map(s=>s.start+' a '+s.end),'Media','Maior','Sugestao'];
-  const lines=[h.join(';'),...romRows.map(r=>[r.loja,r.produto,...r.sem,r.media.toFixed(1).replace('.',','),r.max,r.sugestao].join(';'))];
+  const h=['Loja','Petisco',...romSemanas.map(s=>s.start+' a '+s.end),'Media','Maior','BV (6 sem)','Sugestao'];
+  const lines=[h.join(';'),...romRows.map(r=>[r.loja,r.produto,...r.sem,r.media.toFixed(1).replace('.',','),r.max,r.bv,r.sugestao].join(';'))];
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob(['﻿'+lines.join('\n')],{type:'text/csv'}));
   a.download='sugestao_romaneio_'+toISO(new Date())+'.csv'; a.click();
