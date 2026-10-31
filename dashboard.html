@@ -187,6 +187,18 @@ tr.chope-sub:hover td{background:rgba(255,255,255,.035);}
 .h-status{font-size:.74rem;color:var(--muted);margin-top:6px;min-height:16px;}
 @media(max-width:1100px){.h-cfg-grid{grid-template-columns:1fr 1fr 1fr;}.h-body{grid-template-columns:1fr;}}
 @media print{header,.controls,.tabs,.h-cfg,.h-cats,.h-ph{display:none!important;}.tab-content{display:block!important;}#tab-horario{display:block!important;}.h-print-hdr{display:block!important;}}
+/* ── Sugestão de romaneio ───────────────────────────── */
+.rom-sel{display:grid;grid-template-columns:1fr 1fr auto;gap:14px;padding:16px;align-items:stretch;}
+.rom-box{background:var(--dark2);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;}
+.rom-box-ttl{font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.rom-all{margin-left:auto;text-transform:none;letter-spacing:0;font-weight:500;color:var(--muted);}
+.rom-all a{color:var(--amber);cursor:pointer;}
+.rom-all a:hover{text-decoration:underline;}
+.rom-opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:7px;}
+.rom-opts .sz-tgl{padding:7px 10px;font-size:.82rem;}
+.rom-go{display:flex;align-items:center;}
+.rom-btn{padding:14px 28px;font-size:1rem;border-radius:var(--r);box-shadow:0 3px 12px rgba(232,168,74,.25);}
+@media(max-width:900px){.rom-sel{grid-template-columns:1fr;}.rom-btn{width:100%;}}
 .h-print-hdr{display:none;background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:12px 16px;margin-bottom:12px;font-size:.85rem;}
 
 </style>
@@ -266,7 +278,7 @@ tr.chope-sub:hover td{background:rgba(255,255,255,.035);}
 
 <header>
   <div class="logo"><svg class="oc-logo" viewBox="0 0 270 52" role="img" aria-label="OnzeCopos"><use href="#ocLogo"/></svg><span>Dashboard</span></div>
-  <div class="srv"><div class="dot" id="sDot"></div><span id="sSts">verificando...</span></div>
+  <div class="srv"><div class="dot" id="sDot"></div><span id="sSts">verificando ZigPay…</span></div>
   <div class="spacer"></div>
 </header>
 
@@ -523,23 +535,29 @@ tr.chope-sub:hover td{background:rgba(255,255,255,.035);}
   <div class="tc">
     <div class="th">
       <span class="tt">📦 Sugestão de romaneio da semana</span>
-      <div style="display:flex;gap:6px;align-items:center;">
-        <button class="btn btn-p" id="btnRom" onclick="loadRomaneio()">Calcular</button>
-        <button class="btn btn-s" onclick="exportRomaneio()">⬇ CSV</button>
+      <button class="btn btn-s" onclick="exportRomaneio()">⬇ CSV</button>
+    </div>
+    <div class="rom-sel">
+      <div class="rom-box">
+        <div class="rom-box-ttl">🏪 Unidades<span class="rom-all"><a onclick="romMarcar('romChkLoja',true)">Marcar todas</a> · <a onclick="romMarcar('romChkLoja',false)">Desmarcar</a></span></div>
+        <div id="romSelLojas" class="rom-opts"></div>
+      </div>
+      <div class="rom-box">
+        <div class="rom-box-ttl">🍢 Petiscos<span class="rom-all"><a onclick="romMarcar('romChkProd',true)">Marcar todos</a> · <a onclick="romMarcar('romChkProd',false)">Desmarcar</a></span></div>
+        <div id="romSelProd" class="rom-opts"></div>
+      </div>
+      <div class="rom-go">
+        <button class="btn btn-p rom-btn" id="btnRom" onclick="loadRomaneio()">▶ Calcular</button>
       </div>
     </div>
-    <div id="romInfo" style="font-size:.75rem;color:var(--muted);padding:0 16px 8px;">
+    <div id="romInfo" style="font-size:.75rem;color:var(--muted);padding:0 16px 10px;">
       Vendas ZigPay das últimas 6 semanas completas (seg–dom) · sugestão = média semanal arredondada pra cima.
-    </div>
-    <div style="display:flex;gap:18px;flex-wrap:wrap;padding:0 16px 12px;font-size:.8rem;">
-      <div><div class="cl" style="margin-bottom:5px;">Unidades</div><div id="romSelLojas" style="display:flex;gap:5px;flex-wrap:wrap;"></div></div>
-      <div><div class="cl" style="margin-bottom:5px;">Petiscos</div><div id="romSelProd" style="display:flex;gap:5px;flex-wrap:wrap;"></div></div>
     </div>
     <div id="romLojas" style="display:flex;gap:5px;flex-wrap:wrap;padding:0 16px 10px;"></div>
     <div style="overflow-x:auto;">
       <table>
         <thead id="romThead"></thead>
-        <tbody id="romTbody"><tr><td><div class="empty"><div class="empty-ico">📦</div><h3>Clique em Calcular</h3></div></td></tr></tbody>
+        <tbody id="romTbody"></tbody>
       </table>
     </div>
   </div>
@@ -722,13 +740,15 @@ const LOJAS_FIXAS = [
 ];
 async function checkSrv() {
   try {
-    const r=await fetch(ZIG_BASE+'/erp/lojas?rede=brewteco',{headers:ZIG_HDR(),signal:AbortSignal.timeout(5000)});
+    // Testa com a mesma consulta de vendas usada pelo dashboard (o /erp/lojas sempre devolve 400)
+    const d=toISO(new Date());
+    const r=await fetch(`${ZIG_BASE}/erp/saida-produtos?loja=${LOJAS_FIXAS[0].id}&dtinicio=${d}&dtfim=${d}`,{headers:ZIG_HDR(),signal:AbortSignal.timeout(15000)});
     dot(r.ok); return r.ok;
   } catch { dot(false); return false; }
 }
 function dot(on) {
   document.getElementById('sDot').className='dot'+(on?' on':'');
-  document.getElementById('sSts').textContent=on?'API ok':'API offline';
+  document.getElementById('sSts').textContent=on?'ZigPay conectada':'ZigPay sem resposta agora';
 }
 async function loadLojas() {
   lojas = LOJAS_FIXAS;
@@ -1339,6 +1359,7 @@ let romRows=[], romSemanas=[], romLoja='TODAS', romFalhas=[];
 function setRomLoja(l){ romLoja=l; renderRomaneio(); }
 // Rufi, Morro da Urca e Ferradura não entram no romaneio
 const ROM_LOJAS=LOJAS_FIXAS.filter(l=>!/rufi|morro da urca|ferradura/i.test(l.name));
+function romMarcar(cls,v){ initRomSel(); document.querySelectorAll('.'+cls).forEach(c=>c.checked=v); }
 function initRomSel() {
   if(document.getElementById('romSelLojas').children.length) return;
   const chk=(cls,v,lbl)=>`<label class="sz-tgl"><input type="checkbox" class="${cls}" value="${esc(v)}" checked> ${esc(lbl)}</label>`;
