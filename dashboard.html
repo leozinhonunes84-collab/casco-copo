@@ -3,25 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Brewteco — Dashboard</title>
+<title>Onze Copos — Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
-  --amber:#F5A623;--amber-dark:#D4891A;
-  --dark:#1A1A2E;--dark2:#16213E;
-  --card:#0F3460;--card2:#162447;
-  --text:#E0E0E0;--muted:#8A8A9A;
-  --green:#4CAF50;--red:#F44336;--blue:#2196F3;
-  --border:rgba(255,255,255,0.07);
+  /* Tema cinza grafite: neutro, sem azul, contraste confortável */
+  --amber:#E8A84A;--amber-dark:#CF8F33;
+  --dark:#1E2023;--dark2:#25282C;
+  --card:#33373C;--card2:#2B2E33;
+  --text:#DADCDF;--muted:#949AA1;
+  --green:#6FBF73;--red:#E5675C;--blue:#6AA8E0;
+  --border:rgba(255,255,255,0.08);
   --r:10px;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--dark);color:var(--text);min-height:100vh;}
 
-header{background:linear-gradient(135deg,var(--dark2),var(--card));padding:12px 22px;display:flex;align-items:center;gap:14px;border-bottom:2px solid var(--amber);flex-wrap:wrap;}
+header{background:var(--dark2);padding:12px 22px;display:flex;align-items:center;gap:14px;border-bottom:2px solid var(--amber);flex-wrap:wrap;}
 .logo{font-size:1.35rem;font-weight:800;color:var(--amber);}
-.logo span{color:var(--text);font-weight:300;}
+.logo span{color:var(--muted);font-weight:400;font-size:.7rem;letter-spacing:1.5px;text-transform:uppercase;opacity:.7;}
+.logo{display:flex;align-items:center;gap:10px;}
+.oc-logo{height:18px;width:auto;color:var(--muted);display:block;}
+.login-logo .oc-logo{height:26px;margin:0 auto 6px;}
+.login-logo span{font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);opacity:.7;}
 .spacer{flex:1;}
 .srv{font-size:.73rem;color:var(--muted);display:flex;align-items:center;gap:5px;}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--red);}
@@ -75,9 +80,10 @@ input.srch:focus{border-color:var(--amber);}
 table{width:100%;border-collapse:collapse;font-size:.8rem;}
 th{text-align:left;padding:7px 12px;font-size:.67rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--border);background:var(--dark2);cursor:pointer;user-select:none;white-space:nowrap;}
 th:hover{color:var(--amber);}
-td{padding:7px 12px;border-bottom:1px solid rgba(255,255,255,0.035);}
+td{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.05);}
 tr:last-child td{border-bottom:none;}
-tr:hover td{background:rgba(255,255,255,0.025);}
+tbody tr:nth-child(even) td{background:rgba(255,255,255,0.015);}
+tr:hover td{background:rgba(232,168,74,0.06);}
 td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;}
 
 .badge{display:inline-block;padding:2px 6px;border-radius:20px;font-size:.67rem;font-weight:600;}
@@ -186,17 +192,30 @@ tr.chope-sub:hover td{background:rgba(255,255,255,.035);}
 </style>
 </head>
 <body>
+<!-- Logo OnzeCopos (reutilizado no topo e na tela de senha) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <g id="ocLogo">
+      <g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+        <circle cx="19" cy="27" r="15"/>
+        <path d="M129.5 14.5 A17 17 0 1 0 129.5 39.5"/>
+      </g>
+      <g fill="currentColor" font-family="'Segoe UI','Segoe UI Semilight',system-ui,sans-serif" font-weight="400" font-size="31">
+        <text x="40" y="37">n</text><text x="61" y="37">z</text><text x="80" y="37">e</text>
+        <text x="136" y="37">o</text><text x="157" y="37">p</text><text x="178" y="37">o</text><text x="199" y="37">s</text>
+      </g>
+    </g>
+  </defs>
+</svg>
 
 <!-- ════ Login Gate ════ -->
 <div id="loginGate">
   <div class="login-box">
-    <div class="login-logo">Brewteco<span> Dashboard</span></div>
     <div class="login-sub">Acesso restrito</div>
     <div class="login-label">Senha</div>
     <input id="loginPwd" class="login-input" type="password" placeholder="••••••••••••••" autocomplete="new-password" onkeydown="if(event.key==='Enter')doLogin()">
     <div class="login-err" id="loginErr"></div>
     <button class="login-btn" onclick="doLogin()">🔐 Entrar</button>
-    <div class="login-footer">🍺 Onze Copos — uso interno</div>
   </div>
 </div>
 
@@ -246,7 +265,7 @@ tr.chope-sub:hover td{background:rgba(255,255,255,.035);}
 </div>
 
 <header>
-  <div class="logo">Brewteco <span>Dashboard</span></div>
+  <div class="logo"><svg class="oc-logo" viewBox="0 0 270 52" role="img" aria-label="OnzeCopos"><use href="#ocLogo"/></svg><span>Dashboard</span></div>
   <div class="srv"><div class="dot" id="sDot"></div><span id="sSts">verificando...</span></div>
   <div class="spacer"></div>
 </header>
@@ -510,7 +529,7 @@ tr.chope-sub:hover td{background:rgba(255,255,255,.035);}
       </div>
     </div>
     <div id="romInfo" style="font-size:.75rem;color:var(--muted);padding:0 16px 8px;">
-      Petiscos em pacote de 2/4 (unidades) · vendas ZigPay das últimas 6 semanas completas (seg–dom) · todas as unidades, menos Rufi, Morro da Urca e Ferradura (escolha a unidade nos botões) · sugestão = média semanal arredondada pra cima.
+      Vendas ZigPay das últimas 6 semanas completas (seg–dom) · sugestão = média semanal arredondada pra cima.
     </div>
     <div style="display:flex;gap:18px;flex-wrap:wrap;padding:0 16px 12px;font-size:.8rem;">
       <div><div class="cl" style="margin-bottom:5px;">Unidades</div><div id="romSelLojas" style="display:flex;gap:5px;flex-wrap:wrap;"></div></div>
@@ -531,7 +550,7 @@ tr.chope-sub:hover td{background:rgba(255,255,255,.035);}
 
   <!-- Cabeçalho de impressão -->
   <div class="h-print-hdr" id="hPrintHdr">
-    <strong>📊 Relatório Por Horário — Brewteco</strong><br>
+    <strong>📊 Relatório Por Horário — Onze Copos</strong><br>
     <span id="hPrintInfo" style="color:var(--muted);font-size:.8rem"></span>
   </div>
 
@@ -1429,7 +1448,7 @@ function renderRomaneio() {
     r.sem.map((v,i)=>`<td style="text-align:right">${r.falhou&&r.falhou[i]?'<span style="color:#f44336" title="ZigPay não respondeu">⚠</span>':fN(v)}</td>`).join('')+
     `<td style="text-align:right">${r.media.toFixed(1).replace('.',',')}</td><td style="text-align:right">${fN(r.max)}</td><td style="text-align:right;color:var(--muted)">${r.bv?fN(r.bv):'—'}</td>`+
     `<td style="text-align:right;font-weight:800;color:var(--amber)">${fN(r.sugestao)}</td></tr>`).join('');
-  document.getElementById('romInfo').innerHTML=`Semanas de ${fd(romSemanas[0].start)} a ${fd(romSemanas[5].end)} · unidades (pacote de 2/4 somado) · sugestão = média semanal arredondada pra cima.`+
+  document.getElementById('romInfo').innerHTML=`Semanas de ${fd(romSemanas[0].start)} a ${fd(romSemanas[5].end)} · sugestão = média semanal arredondada pra cima.`+
     (falhas.length?` <span style="color:#f44336">⚠ ${falhas.length} semana(s) sem resposta da ZigPay: ${esc(falhas.join(', '))}</span>`:'');
 }
 function exportRomaneio() {
