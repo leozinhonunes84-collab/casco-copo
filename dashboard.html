@@ -551,7 +551,7 @@ tr.chope-sub:hover td{background:rgba(255,255,255,.035);}
       </div>
     </div>
     <div id="romInfo" style="font-size:.75rem;color:var(--muted);padding:0 16px 10px;">
-      Vendas ZigPay das últimas 6 semanas completas (seg–dom) · sugestão = média semanal arredondada pra cima.
+      Vendas ZigPay das últimas 6 semanas completas (seg–dom) · sugestão = média semanal + 20%, arredondada pra cima.
     </div>
     <div id="romLojas" style="display:flex;gap:5px;flex-wrap:wrap;padding:0 16px 10px;"></div>
     <div style="overflow-x:auto;">
@@ -1435,7 +1435,7 @@ async function loadRomaneio() {
     r.falhou=romSemanas.map((_,i)=>!ok.includes(i));
     const vals=ok.map(i=>r.sem[i]);
     const media=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0;
-    return {...r,media,max:Math.max(0,...vals),sugestao:Math.ceil(media)};
+    return {...r,media,max:Math.max(0,...vals),sugestao:Math.ceil(media*1.2-1e-9)};
   }).sort((a,b)=>a.loja.localeCompare(b.loja)||a.produto.localeCompare(b.produto));
   btn.disabled=false;
   romFalhas=falhas;
@@ -1462,14 +1462,14 @@ function renderRomaneio() {
   const linhas=romVisiveis();
   document.getElementById('romThead').innerHTML='<tr><th>Loja</th><th>Petisco</th>'+
     romSemanas.map(s=>`<th style="text-align:right">${fd(s.start)}–${fd(s.end)}</th>`).join('')+
-    '<th style="text-align:right">Média</th><th style="text-align:right">Maior</th><th style="text-align:right" title="Unidades avulsas BV nas 6 semanas (já somadas nas semanas)">BV (6 sem.)</th><th style="text-align:right;color:var(--amber)">Sugestão (un)</th></tr>';
+    '<th style="text-align:right;color:#9ec9f0">Média</th><th style="text-align:right;color:#f2a7c3">Maior</th><th style="text-align:right" title="Unidades avulsas BV nas 6 semanas (já somadas nas semanas)">BV (6 sem.)</th><th style="text-align:right;color:var(--amber)">Sugestão (un)</th></tr>';
   const tb=document.getElementById('romTbody');
   if(!linhas.length){ tb.innerHTML='<tr><td colspan="12"><div class="empty"><h3>Nenhuma venda desses petiscos no período</h3></div></td></tr>'; }
   else tb.innerHTML=linhas.map(r=>`<tr><td>${esc(r.loja)}</td><td>${esc(r.produto)}</td>`+
     r.sem.map((v,i)=>`<td style="text-align:right">${r.falhou&&r.falhou[i]?'<span style="color:#f44336" title="ZigPay não respondeu">⚠</span>':fN(v)}</td>`).join('')+
-    `<td style="text-align:right">${r.media.toFixed(1).replace('.',',')}</td><td style="text-align:right">${fN(r.max)}</td><td style="text-align:right;color:var(--muted)">${r.bv?fN(r.bv):'—'}</td>`+
-    `<td style="text-align:right;font-weight:800;color:var(--amber)">${fN(r.sugestao)}</td></tr>`).join('');
-  document.getElementById('romInfo').innerHTML=`Semanas de ${fd(romSemanas[0].start)} a ${fd(romSemanas[5].end)} · sugestão = média semanal arredondada pra cima.`+
+    `<td style="text-align:right;font-weight:700;font-size:1.06em;color:#9ec9f0">${r.media.toFixed(1).replace('.',',')}</td><td style="text-align:right;font-weight:700;font-size:1.06em;color:#f2a7c3">${fN(r.max)}</td><td style="text-align:right;color:var(--muted)">${r.bv?fN(r.bv):'—'}</td>`+
+    `<td style="text-align:right;font-weight:800;font-size:1.15em;color:var(--amber)">${fN(r.sugestao)}</td></tr>`).join('');
+  document.getElementById('romInfo').innerHTML=`Semanas de ${fd(romSemanas[0].start)} a ${fd(romSemanas[5].end)} · sugestão = média semanal + 20%, arredondada pra cima.`+
     (falhas.length?` <span style="color:#f44336">⚠ ${falhas.length} semana(s) sem resposta da ZigPay: ${esc(falhas.join(', '))}</span>`:'');
 }
 function exportRomaneio() {
